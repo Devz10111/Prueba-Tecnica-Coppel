@@ -1,7 +1,10 @@
 package com.coppel.reservas.service;
 
+import com.coppel.reservas.dto.CambioEstadoRequest;
+import com.coppel.reservas.dto.ReservaModificacionRequest;
 import com.coppel.reservas.dto.ReservaRequest;
 import com.coppel.reservas.dto.ReservaResponse;
+import com.coppel.reservas.dto.ReservaResumenResponse;
 import com.coppel.reservas.exception.ConflictoException;
 import com.coppel.reservas.exception.RecursoNoEncontradoException;
 import com.coppel.reservas.exception.ReglaNegocioException;
@@ -9,20 +12,24 @@ import com.coppel.reservas.model.Espacio;
 import com.coppel.reservas.model.EstadoReserva;
 import com.coppel.reservas.model.HistorialCambio;
 import com.coppel.reservas.model.Reserva;
+import com.coppel.reservas.model.Usuario;
 import com.coppel.reservas.repository.EspacioRepository;
 import com.coppel.reservas.repository.HistorialCambioRepository;
 import com.coppel.reservas.repository.ReservaRepository;
+import com.coppel.reservas.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/** Lógica de negocio de las reservas: validaciones, folio e historial. */
+/** Lógica de negocio de las reservas: validaciones, folio, historial y gestión del administrador. */
 @Service
 @RequiredArgsConstructor
 public class ReservaService {
@@ -39,16 +46,19 @@ public class ReservaService {
     private final ReservaRepository reservaRepository;
     private final EspacioRepository espacioRepository;
     private final HistorialCambioRepository historialRepository;
+    private final UsuarioRepository usuarioRepository;
+
+    // =====================================================================
+    // PORTAL DEL EMPLEADO
+    // =====================================================================
 
     /** CU1: registra una nueva solicitud y devuelve la reserva con su folio. */
     @Transactional
     public ReservaResponse crear(ReservaRequest req) {
 
-        Espacio espacio = espacioRepository.findById(req.espacioId())
-                .orElseThrow(() -> new RecursoNoEncontradoException(
-                        "No existe el espacio con id " + req.espacioId()));
+        Espacio espacio = buscarEspacio(req.espacioId());
 
-        validarHorario(req);
+        validarHorario(req.fecha(), req.horaInicio(), req.horaFin());
 
         boolean ocupado = reservaRepository.existeSolapamiento(
                 espacio.getId(), req.fecha(), req.horaInicio(), req.horaFin(),
@@ -80,30 +90,157 @@ public class ReservaService {
         return armarRespuesta(reserva);
     }
 
-    /** CU2: consulta una reserva por su folio. */
+    /** CU2: consulta una reserva por su folio (también la usa el administrador). */
     @Transactional(readOnly = true)
     public ReservaResponse consultarPorFolio(String folio) {
-        Reserva reserva = reservaRepository.findByFolio(folio)
-                .orElseThrow(() -> new RecursoNoEncontradoException(
-                        "No existe una reserva con el folio " + folio));
+        return armarRespuesta(buscarPorFolio(folio));
+    }
+
+    // =====================================================================
+    // PORTAL DE ADMINISTRACIÓN (CU3)
+    // =====================================================================
+
+    /** Lista todas las reservas; si se indica un estado, solo las de ese estado. */
+    @Transactional(readOnly = true)
+    public List<ReservaResumenResponse> listar(EstadoReserva estado) {
+        List<Reserva> reservas = (estado == null)
+                ? reservaRepository.listarTodas()
+                : reservaRepository.listarPorEstado(estado);
+        return reservas.stream().map(ReservaResumenResponse::desde).toList();
+    }
+
+    /** Aprueba o rechaza una reserva pendiente. */
+    @Transactional
+    public ReservaResponse cambiarEstado(String folio, CambioEstadoRequest req, String emailAdmin) {
+        Reserva reserva = buscarPorFolio(folio);
+        Usuario admin = buscarUsuario(emailAdmin);
+
+        if (req.estado() != EstadoReserva.APROBADA && req.estado() != EstadoReserva.RECHAZADA) {
+            throw new ReglaNegocioException("Solo se puede cambiar el estado a APROBADA o RECHAZADA");
+        }
+        if (reserva.getEstado() != EstadoReserva.PENDIENTE) {
+            throw new ConflictoException(
+                    "Solo se pueden aprobar o rechazar reservas pendientes. Estado actual: "
+                            + reserva.getEstado());
+        }
+
+        reserva.setEstado(req.estado());
+
+        String comentario = (req.comentario() == null || req.comentario().isBlank())
+                ? "" : ". Comentario: " + req.comentario();
+        historialRepository.save(new HistorialCambio(
+                reserva, admin, req.estado().name(), "Estado: PENDIENTE -> " + req.estado() + comentario));
+
         return armarRespuesta(reserva);
     }
 
-    // ---------- Métodos auxiliares ----------
+    /** Modifica espacio, fecha u horario de una reserva pendiente o aprobada. */
+    @Transactional
+    public ReservaResponse modificar(String folio, ReservaModificacionRequest req, String emailAdmin) {
+        Reserva reserva = buscarPorFolio(folio);
+        Usuario admin = buscarUsuario(emailAdmin);
 
-    private void validarHorario(ReservaRequest req) {
-        if (!req.horaFin().isAfter(req.horaInicio())) {
+        if (!ESTADOS_QUE_BLOQUEAN.contains(reserva.getEstado())) {
+            throw new ConflictoException(
+                    "Solo se pueden modificar reservas pendientes o aprobadas. Estado actual: "
+                            + reserva.getEstado());
+        }
+
+        Espacio espacio = buscarEspacio(req.espacioId());
+        validarHorario(req.fecha(), req.horaInicio(), req.horaFin());
+
+        // Se excluye la propia reserva para que no choque consigo misma
+        boolean ocupado = reservaRepository.existeSolapamiento(
+                espacio.getId(), req.fecha(), req.horaInicio(), req.horaFin(),
+                ESTADOS_QUE_BLOQUEAN, reserva.getId());
+        if (ocupado) {
+            throw new ConflictoException(
+                    "El espacio ya está reservado en ese horario. Elige otro horario u otro espacio.");
+        }
+
+        // Se arma el detalle con lo que realmente cambió
+        List<String> cambios = new ArrayList<>();
+        if (!reserva.getEspacio().getId().equals(espacio.getId())) {
+            cambios.add("espacio: " + reserva.getEspacio().getNombre() + " -> " + espacio.getNombre());
+        }
+        if (!reserva.getFecha().equals(req.fecha())) {
+            cambios.add("fecha: " + reserva.getFecha() + " -> " + req.fecha());
+        }
+        if (!reserva.getHoraInicio().equals(req.horaInicio())) {
+            cambios.add("hora de inicio: " + reserva.getHoraInicio() + " -> " + req.horaInicio());
+        }
+        if (!reserva.getHoraFin().equals(req.horaFin())) {
+            cambios.add("hora de fin: " + reserva.getHoraFin() + " -> " + req.horaFin());
+        }
+        if (cambios.isEmpty()) {
+            throw new ReglaNegocioException("No hay cambios que aplicar: los datos son iguales a los actuales");
+        }
+
+        reserva.setEspacio(espacio);
+        reserva.setFecha(req.fecha());
+        reserva.setHoraInicio(req.horaInicio());
+        reserva.setHoraFin(req.horaFin());
+
+        historialRepository.save(new HistorialCambio(
+                reserva, admin, "MODIFICADA", String.join("; ", cambios)));
+
+        return armarRespuesta(reserva);
+    }
+
+    /** Cancela una reserva (no se borra: queda con estado CANCELADA y su historial). */
+    @Transactional
+    public ReservaResponse cancelar(String folio, String emailAdmin) {
+        Reserva reserva = buscarPorFolio(folio);
+        Usuario admin = buscarUsuario(emailAdmin);
+
+        if (!ESTADOS_QUE_BLOQUEAN.contains(reserva.getEstado())) {
+            throw new ConflictoException(
+                    "No se puede cancelar una reserva con estado " + reserva.getEstado());
+        }
+
+        EstadoReserva anterior = reserva.getEstado();
+        reserva.setEstado(EstadoReserva.CANCELADA);
+
+        historialRepository.save(new HistorialCambio(
+                reserva, admin, "CANCELADA", "Cancelada por el administrador (estado anterior: " + anterior + ")"));
+
+        return armarRespuesta(reserva);
+    }
+
+    // =====================================================================
+    // Métodos auxiliares
+    // =====================================================================
+
+    private Reserva buscarPorFolio(String folio) {
+        return reservaRepository.findByFolio(folio)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "No existe una reserva con el folio " + folio));
+    }
+
+    private Espacio buscarEspacio(Long id) {
+        return espacioRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "No existe el espacio con id " + id));
+    }
+
+    private Usuario buscarUsuario(String email) {
+        return usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RecursoNoEncontradoException("No se encontró al usuario autenticado"));
+    }
+
+    private void validarHorario(LocalDate fecha, LocalTime inicio, LocalTime fin) {
+        if (!fin.isAfter(inicio)) {
             throw new ReglaNegocioException("La hora de fin debe ser posterior a la hora de inicio");
         }
-        if (req.horaInicio().isBefore(HORA_APERTURA) || req.horaFin().isAfter(HORA_CIERRE)) {
+        if (inicio.isBefore(HORA_APERTURA) || fin.isAfter(HORA_CIERRE)) {
             throw new ReglaNegocioException(
                     "Las reservas solo se permiten entre " + HORA_APERTURA + " y " + HORA_CIERRE);
         }
-        if (Duration.between(req.horaInicio(), req.horaFin()).toMinutes() < DURACION_MINIMA_MINUTOS) {
+        if (Duration.between(inicio, fin).toMinutes() < DURACION_MINIMA_MINUTOS) {
             throw new ReglaNegocioException(
                     "La duración mínima de una reserva es de " + DURACION_MINIMA_MINUTOS + " minutos");
         }
-        if (LocalDateTime.of(req.fecha(), req.horaInicio()).isBefore(LocalDateTime.now())) {
+        if (LocalDateTime.of(fecha, inicio).isBefore(LocalDateTime.now())) {
             throw new ReglaNegocioException("No se puede reservar en una fecha y hora que ya pasó");
         }
     }

@@ -33,7 +33,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/reservas").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/reservas/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/espacios/**").permitAll()
-                // Portal de administración: solo administradores y jefes de departamento
+                // Cancelar reservas: solo administradores (esta regla va ANTES de la general)
+                .requestMatchers(HttpMethod.DELETE, "/api/admin/**").hasRole("ADMIN")
+                // Resto del portal de administración: administradores y jefes de departamento
                 .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "JEFE_DEPARTAMENTO")
                 .anyRequest().authenticated()
             )
