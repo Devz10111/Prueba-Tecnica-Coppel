@@ -15,58 +15,107 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
-/** Reglas de seguridad de la API: qué rutas son públicas y cuáles requieren un JWT válido. */
-@Configuration
+/**
+ * Configuración de seguridad de la API.
+ * Define qué rutas son públicas, cuáles requieren un JWT válido y qué rol hace falta
+ * para cada una. Spring Security aplica estas reglas antes de que la petición llegue
+ * a cualquier controlador.
+ */
+@Configuration  // Clase de configuración: Spring lee los @Bean que define
 public class SecurityConfig {
 
+    /**
+     * Cadena de filtros de seguridad: el conjunto de reglas por las que pasa
+     * cada petición HTTP antes de llegar al controlador.
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+            // CSRF protege formularios que usan cookies de sesión.
+            // Esta API no usa cookies (usa tokens JWT), así que se desactiva.
             .csrf(AbstractHttpConfigurer::disable)
+
+            // Activa CORS con las reglas definidas más abajo en corsConfigurationSource()
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            // Sin sesiones en el servidor: cada petición trae su propio token
+
+            // STATELESS = el servidor NO guarda sesiones en memoria.
+            // Cada petición trae su propio token con toda la información del usuario.
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+            // Reglas de autorización. IMPORTANTE: se evalúan en orden, de arriba hacia abajo,
+            // y gana la primera que coincida. Por eso las reglas más específicas van primero.
             .authorizeHttpRequests(auth -> auth
+
+                // Ruta interna de Spring donde se muestran los errores.
+                // Si estuviera bloqueada, un error se vería como un 403 vacío.
                 .requestMatchers("/error").permitAll()
+
+                // Login: debe ser público, porque aún no se tiene token para entrar.
                 .requestMatchers("/api/auth/**").permitAll()
-                // Rutas públicas: lo que usa el empleado
-                .requestMatchers(HttpMethod.POST, "/api/reservas").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/reservas/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/espacios/**").permitAll()
-                // Cancelar reservas: solo administradores (esta regla va ANTES de la general)
+
+                // Documentación Swagger (interfaz web y definición de la API).
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+
+                // --- Portal del empleado: no requiere iniciar sesión ---
+                .requestMatchers(HttpMethod.POST, "/api/reservas").permitAll()      // crear reserva
+                .requestMatchers(HttpMethod.GET, "/api/reservas/**").permitAll()    // consultar por folio
+                .requestMatchers(HttpMethod.GET, "/api/espacios/**").permitAll()    // espacios y disponibilidad
+
+                // --- Portal de administración ---
+                // Cancelar reservas (DELETE): solo ADMIN.
+                // Va ANTES de la regla general de /api/admin/** para que tenga prioridad;
+                // si fuera después, el jefe de departamento también podría cancelar.
                 .requestMatchers(HttpMethod.DELETE, "/api/admin/**").hasRole("ADMIN")
-                // Resto del portal de administración: administradores y jefes de departamento
+
+                // Resto de operaciones de administración (listar, aprobar, rechazar, modificar):
+                // administradores y jefes de departamento.
                 .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "JEFE_DEPARTAMENTO")
+
+                // Cualquier otra ruta no declarada arriba requiere estar autenticado.
+                // Es una medida de seguridad por defecto: lo que no se permite, se bloquea.
                 .anyRequest().authenticated()
             )
-            // Valida el token JWT que llega en el encabezado Authorization: Bearer ...
+
+            // Convierte a la aplicación en "servidor de recursos" que valida tokens JWT.
+            // Lee el encabezado "Authorization: Bearer <token>", comprueba la firma y la
+            // vigencia con el JwtDecoder (definido en JwtConfig) y, si es válido, identifica
+            // al usuario y su rol.
             .oauth2ResourceServer(oauth2 -> oauth2
                 .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
+
         return http.build();
     }
 
-    // Convierte el claim "rol" del token (ADMIN) en la autoridad ROLE_ADMIN que entiende Spring
+    /**
+     * Traduce el rol guardado dentro del token a un "permiso" que Spring Security entiende.
+     * El token trae "rol": "ADMIN"; Spring espera "ROLE_ADMIN" (por eso el prefijo).
+     * Así funcionan hasRole("ADMIN") y hasAnyRole(...) en las reglas de arriba.
+     */
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter autoridades = new JwtGrantedAuthoritiesConverter();
-        autoridades.setAuthoritiesClaimName("rol");
-        autoridades.setAuthorityPrefix("ROLE_");
+        autoridades.setAuthoritiesClaimName("rol");   // nombre del dato dentro del token
+        autoridades.setAuthorityPrefix("ROLE_");      // se antepone a "ADMIN" → "ROLE_ADMIN"
 
         JwtAuthenticationConverter convertidor = new JwtAuthenticationConverter();
         convertidor.setJwtGrantedAuthoritiesConverter(autoridades);
         return convertidor;
     }
 
-    // Permite que el frontend Angular (puerto 4200) llame a esta API (puerto 8080)
+    /**
+     * CORS: el navegador bloquea por defecto que una página de un origen
+     * (Angular en localhost:4200) llame a una API de otro origen (localhost:8080).
+     * Esta configuración le indica al navegador que ese origen está autorizado.
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:4200"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedOrigins(List.of("http://localhost:4200"));                       // quién puede llamar
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));     // con qué métodos
+        config.setAllowedHeaders(List.of("*"));                                           // con qué encabezados
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
+        source.registerCorsConfiguration("/**", config);   // aplica a todas las rutas
         return source;
     }
 }
