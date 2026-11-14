@@ -28,8 +28,8 @@ import java.util.UUID;
 public class ReservaService {
 
     // Reglas de negocio (supuestos propios, fáciles de cambiar aquí)
-    private static final LocalTime HORA_APERTURA = LocalTime.of(8, 0);
-    private static final LocalTime HORA_CIERRE = LocalTime.of(20, 0);
+    public static final LocalTime HORA_APERTURA = LocalTime.of(8, 0);
+    public static final LocalTime HORA_CIERRE = LocalTime.of(20, 0);
     private static final long DURACION_MINIMA_MINUTOS = 30;
 
     // Solo las reservas en estos estados ocupan el espacio
