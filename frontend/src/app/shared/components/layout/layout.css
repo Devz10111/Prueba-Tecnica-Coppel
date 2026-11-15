@@ -1,0 +1,23 @@
+/* Pequeños ajustes visuales del layout general. */
+
+.navbar-brand {
+  letter-spacing: 0.02em;
+}
+
+/* Transición suave al pasar el mouse por los enlaces. */
+.navbar .nav-link {
+  transition: color 0.15s ease;
+}
+
+.navbar .nav-link:hover,
+.navbar .nav-link.active {
+  color: #fff;
+}
+
+.navbar .nav-link.active {
+  font-weight: 600;
+}
+
+footer {
+  font-size: 0.875rem;
+}

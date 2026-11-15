@@ -1,0 +1,32 @@
+/* Efecto de elevación al pasar el mouse o al enfocar una tarjeta. */
+.tarjeta-acceso {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tarjeta-acceso:hover,
+.tarjeta-acceso:focus-visible {
+  transform: translateY(-4px);
+  box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Contorno visible para navegación con teclado. */
+.tarjeta-acceso:focus-visible {
+  outline: 3px solid rgba(13, 110, 253, 0.35);
+  outline-offset: 2px;
+}
+
+/* Círculo que contiene el icono de cada tarjeta. */
+.icono-acceso {
+  width: 4rem;
+  height: 4rem;
+  font-size: 1.75rem;
+}
+
+/* En teléfonos el icono se reduce un poco para dejar más espacio al texto. */
+@media (max-width: 575.98px) {
+  .icono-acceso {
+    width: 3.5rem;
+    height: 3.5rem;
+    font-size: 1.5rem;
+  }
+}

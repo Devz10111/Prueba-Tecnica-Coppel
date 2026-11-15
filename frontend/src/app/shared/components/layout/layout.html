@@ -1,0 +1,104 @@
+<!-- Contenedor de toda la pantalla: columna flexible que ocupa el alto visible. -->
+<div class="d-flex flex-column min-vh-100">
+
+  <!-- ================= BARRA DE NAVEGACIÓN ================= -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <div class="container">
+
+      <!-- Marca: siempre lleva al inicio. -->
+      <a
+        class="navbar-brand d-flex align-items-center gap-2 fw-semibold"
+        routerLink="/"
+        (click)="cerrarMenu()"
+      >
+        <i class="bi bi-buildings fs-5"></i>
+        <span>Reserva de Espacios</span>
+      </a>
+
+      <!-- Botón hamburguesa visible solo en pantallas pequeñas.
+           El menú se controla con Angular (signal), sin necesitar el JS de Bootstrap. -->
+      <button
+        class="navbar-toggler"
+        type="button"
+        (click)="alternarMenu()"
+        [attr.aria-expanded]="menuAbierto()"
+        aria-controls="menuPrincipal"
+        aria-label="Abrir o cerrar el menú"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <!-- En escritorio (navbar-expand-lg) este bloque siempre está visible.
+           En móvil se muestra u oculta con la clase .show. -->
+      <div
+        id="menuPrincipal"
+        class="collapse navbar-collapse"
+        [class.show]="menuAbierto()"
+      >
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
+          <li class="nav-item">
+            <a
+              class="nav-link"
+              routerLink="/reservar"
+              routerLinkActive="active"
+              (click)="cerrarMenu()"
+            >
+              <i class="bi bi-calendar-plus me-1"></i>Nueva reserva
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a
+              class="nav-link"
+              routerLink="/consultar"
+              routerLinkActive="active"
+              (click)="cerrarMenu()"
+            >
+              <i class="bi bi-search me-1"></i>Consultar
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a
+              class="nav-link"
+              routerLink="/calendario"
+              routerLinkActive="active"
+              (click)="cerrarMenu()"
+            >
+              <i class="bi bi-calendar3 me-1"></i>Disponibilidad
+            </a>
+          </li>
+
+          <!-- Enlace discreto al portal de administración. -->
+          <li class="nav-item ms-lg-3">
+            <a
+              class="nav-link text-white-50"
+              routerLink="/admin/login"
+              routerLinkActive="active"
+              (click)="cerrarMenu()"
+            >
+              <i class="bi bi-shield-lock me-1"></i>Acceso administrador
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ================= CONTENIDO DE CADA RUTA ================= -->
+  <main class="flex-grow-1">
+    <div class="container py-4 py-md-5">
+      <!-- Aquí Angular carga la pantalla que corresponde a la URL actual. -->
+      <router-outlet />
+    </div>
+  </main>
+
+  <!-- ================= PIE DE PÁGINA ================= -->
+  <footer class="bg-dark text-white-50 text-center py-3">
+    <div class="container">
+      <small>
+        &copy; {{ anioActual }} Grupo Coppel · Plataforma de reserva de espacios
+      </small>
+    </div>
+  </footer>
+</div>

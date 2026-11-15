@@ -1,0 +1,23 @@
+/* ============================================================
+   ESTILOS GLOBALES
+   Este archivo se aplica a TODA la aplicación.
+   ============================================================ */
+
+/* Bootstrap 5 se instala con npm y se importa desde node_modules.
+   Al importarlo aquí, todas las pantallas pueden usar sus clases
+   (container, row, col, btn, card, table, etc.). */
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
+/* Iconos oficiales de Bootstrap (bi bi-calendar, bi bi-search, etc.). */
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+
+/* Fondo general claro para todas las pantallas. */
+body {
+  background-color: #f8f9fa;
+}
+
+/* Hace que la aplicación ocupe al menos toda la altura de la ventana. */
+html,
+body {
+  min-height: 100%;
+}
