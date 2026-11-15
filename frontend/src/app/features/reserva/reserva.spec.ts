@@ -208,6 +208,11 @@ describe('Reserva', () => {
     expect(componente.reservaCreada()?.folio).toBe('2099000123');
     expect(fixture.nativeElement.textContent).toContain('Reserva exitosa');
     expect(fixture.nativeElement.textContent).toContain('2099000123');
+
+    // El botón de la confirmación enlaza al folio dentro de la URL.
+    expect(
+      fixture.nativeElement.querySelector('a[href="/consultar/2099000123"]'),
+    ).not.toBeNull();
   });
 
   it('muestra el error 409 de la API y permite volver al paso 2', () => {

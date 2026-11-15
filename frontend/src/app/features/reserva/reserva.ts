@@ -19,6 +19,10 @@ import {
 import { EspacioService } from '../../core/services/espacio.service';
 import { ReservaService } from '../../core/services/reserva.service';
 import { obtenerMensajeError } from '../../core/utils/error.utils';
+import {
+  formatearFechaLarga,
+  formatearHoraCorta,
+} from '../../core/utils/fecha.utils';
 
 /** Devuelve la fecha local en formato "YYYY-MM-DD" (sin desfase por zona horaria). */
 function fechaLocal(fecha: Date): string {
@@ -594,33 +598,9 @@ export class Reserva implements OnInit {
     return 'Revisa este campo.';
   }
 
-  /** Convierte "HH:mm:ss" en "HH:mm" para mostrarlo. */
-  protected horaCorta(hora: string | null | undefined): string {
-    return hora ? hora.slice(0, 5) : '—';
-  }
-
-  /** Formatea "YYYY-MM-DD" como "Viernes, 20 de noviembre de 2026". */
-  protected fechaLarga(fecha: string | null): string {
-    if (!fecha) {
-      return '—';
-    }
-
-    const partes = fecha.split('-').map(Number);
-    if (partes.length !== 3 || partes.some((parte) => Number.isNaN(parte))) {
-      return fecha;
-    }
-
-    const [anio, mes, dia] = partes;
-    const formateador = new Intl.DateTimeFormat('es-MX', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
-
-    const texto = formateador.format(new Date(anio, mes - 1, dia));
-    return texto.charAt(0).toUpperCase() + texto.slice(1);
-  }
+  /** Se exponen como propiedades para que la plantilla pueda llamarlas. */
+  protected readonly horaCorta = formatearHoraCorta;
+  protected readonly fechaLarga = formatearFechaLarga;
 
   private desplazarArriba(): void {
     if (typeof window !== 'undefined') {

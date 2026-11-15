@@ -1,0 +1,193 @@
+<section class="contenedor-consulta">
+  <header class="mb-4">
+    <span class="badge text-bg-warning mb-2">Grupo Coppel</span>
+    <h1 class="h3 fw-bold mb-1">Consultar reserva</h1>
+    <p class="text-secondary mb-0">
+      Escribe el folio para ver los detalles, el estado y el historial de cambios.
+    </p>
+  </header>
+
+  <!-- ================= BUSCADOR ================= -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-3 p-md-4">
+      <form [formGroup]="form" (ngSubmit)="buscar()" novalidate>
+        <label for="folio" class="form-label fw-semibold">Folio de la reserva</label>
+
+        <div class="input-group input-group-lg has-validation">
+          <span class="input-group-text bg-white text-secondary">
+            <i class="bi bi-hash"></i>
+          </span>
+
+          <input
+            id="folio"
+            type="text"
+            class="form-control"
+            formControlName="folio"
+            inputmode="numeric"
+            autocomplete="off"
+            placeholder="Ej. 2026000001"
+            [class.is-invalid]="errorFolio()"
+            aria-describedby="folio-ayuda"
+          />
+
+          <button
+            type="submit"
+            class="btn btn-primary px-3 px-sm-4"
+            [disabled]="!puedeBuscar()"
+          >
+            @if (buscando()) {
+              <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+              Buscando...
+            } @else {
+              <i class="bi bi-search me-1"></i>Buscar
+            }
+          </button>
+        </div>
+
+        @if (errorFolio(); as mensaje) {
+          <div id="folio-ayuda" class="invalid-feedback d-block">{{ mensaje }}</div>
+        } @else {
+          <div id="folio-ayuda" class="form-text">
+            Solo dígitos. También puedes abrir directamente
+            <code>/consultar/2026000001</code>.
+          </div>
+        }
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MENSAJES ================= -->
+  @if (error(); as mensaje) {
+    <div
+      class="alert d-flex align-items-start gap-3"
+      [class.alert-warning]="noEncontrada()"
+      [class.alert-danger]="!noEncontrada()"
+      role="alert"
+    >
+      <i class="bi fs-4" [class.bi-search]="noEncontrada()" [class.bi-exclamation-triangle]="!noEncontrada()"></i>
+      <div>
+        <h2 class="h6 fw-bold mb-1">
+          {{ noEncontrada() ? 'No encontramos esa reserva' : 'No pudimos consultar la reserva' }}
+        </h2>
+        <p class="mb-0">{{ mensaje }}</p>
+      </div>
+    </div>
+  }
+
+  <!-- ================= ESTADO INICIAL ================= -->
+  @if (!reserva() && !buscando() && !error()) {
+    <div class="estado-vacio">
+      <i class="bi bi-search display-6 text-secondary"></i>
+      <h2 class="h6 fw-bold mt-3 mb-1">Consulta el estado de tu reserva</h2>
+      <p class="text-secondary mb-0">
+        Ingresa el folio que recibiste al crear la reserva.
+      </p>
+    </div>
+  }
+
+  <!-- ================= CARGANDO ================= -->
+  @if (buscando()) {
+    <div class="card border-0 shadow-sm" role="status" aria-live="polite">
+      <div class="card-body text-center py-5">
+        <div class="spinner-border text-warning" aria-hidden="true"></div>
+        <p class="text-secondary mt-3 mb-0">Buscando la reserva...</p>
+      </div>
+    </div>
+  }
+
+  <!-- ================= RESULTADO ================= -->
+  @if (reserva(); as r) {
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body p-3 p-md-4">
+        <div class="d-flex flex-column flex-sm-row justify-content-between gap-2 mb-3">
+          <div>
+            <span class="text-secondary small">Folio</span>
+            <h2 class="h4 fw-bold folio-consulta mb-0">{{ r.folio }}</h2>
+          </div>
+
+          <span
+            [class]="'badge fs-6 align-self-start estado-badge ' + claseEstado(r.estado)"
+          >
+            {{ r.estado }}
+          </span>
+        </div>
+
+        <dl class="row resumen mb-0">
+          <dt class="col-sm-4">Espacio</dt>
+          <dd class="col-sm-8">
+            {{ r.espacio }}
+            <span class="text-secondary">({{ r.capacidadEspacio }} personas)</span>
+          </dd>
+
+          <dt class="col-sm-4">Fecha</dt>
+          <dd class="col-sm-8">{{ fechaLarga(r.fecha) }}</dd>
+
+          <dt class="col-sm-4">Horario</dt>
+          <dd class="col-sm-8">
+            {{ horaCorta(r.horaInicio) }} – {{ horaCorta(r.horaFin) }}
+            <span class="text-secondary">({{ r.duracionMinutos }} minutos)</span>
+          </dd>
+
+          <dt class="col-sm-4">Solicitante</dt>
+          <dd class="col-sm-8">{{ r.solicitante }}</dd>
+
+          <dt class="col-sm-4">Departamento</dt>
+          <dd class="col-sm-8">{{ r.departamento }}</dd>
+
+          <dt class="col-sm-4">Descripción</dt>
+          <dd class="col-sm-8 descripcion-resumen">{{ r.descripcion }}</dd>
+
+          <dt class="col-sm-4">Registrada</dt>
+          <dd class="col-sm-8">{{ fechaHora(r.creadaEn) }}</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+        <h2 class="h5 fw-bold mb-0">
+          <i class="bi bi-clock-history me-2"></i>Historial de cambios
+        </h2>
+        <span class="badge text-bg-light">{{ r.historial.length }}</span>
+      </div>
+
+      <div class="card-body p-3 p-md-4">
+        @if (r.historial.length > 0) {
+          <ol class="linea-tiempo list-unstyled mb-0">
+            @for (cambio of r.historial; track $index) {
+              <li class="linea-tiempo-item">
+                <span [class]="'punto ' + claseAccion(cambio.accion)"></span>
+
+                <div class="linea-tiempo-contenido">
+                  <div class="d-flex flex-column flex-sm-row justify-content-between gap-1">
+                    <strong class="text-uppercase">{{ cambio.accion }}</strong>
+                    <span class="small text-secondary">{{ fechaHora(cambio.fecha) }}</span>
+                  </div>
+
+                  @if (cambio.detalle) {
+                    <p class="mb-1 mt-1">{{ cambio.detalle }}</p>
+                  }
+
+                  <span class="small text-secondary">
+                    <i class="bi bi-person me-1"></i>{{ cambio.usuario }}
+                  </span>
+                </div>
+              </li>
+            }
+          </ol>
+        } @else {
+          <p class="text-secondary mb-0">Esta reserva todavía no tiene movimientos.</p>
+        }
+      </div>
+    </div>
+
+    <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center mt-4">
+      <a class="btn btn-primary" routerLink="/reservar">
+        <i class="bi bi-plus-lg me-1"></i>Nueva reserva
+      </a>
+      <button type="button" class="btn btn-outline-secondary" (click)="limpiar()">
+        <i class="bi bi-search me-1"></i>Consultar otro folio
+      </button>
+    </div>
+  }
+</section>

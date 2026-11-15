@@ -108,21 +108,6 @@
   font-size: 1.25rem;
 }
 
-/* ================= RESÚMENES ================= */
-.resumen dt {
-  font-weight: 600;
-  color: #495057;
-}
-
-.resumen dd {
-  margin-bottom: 0.75rem;
-}
-
-.descripcion-resumen {
-  white-space: pre-line;
-  overflow-wrap: anywhere;
-}
-
 /* ================= CONFIRMACIÓN ================= */
 .icono-exito {
   color: #198754;

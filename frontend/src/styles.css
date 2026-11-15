@@ -28,3 +28,18 @@ html,
 body {
   min-height: 100%;
 }
+
+/* Resúmenes de datos usados en la confirmación y en la consulta. */
+.resumen dt {
+  font-weight: 600;
+  color: #495057;
+}
+
+.resumen dd {
+  margin-bottom: 0.75rem;
+}
+
+.descripcion-resumen {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}

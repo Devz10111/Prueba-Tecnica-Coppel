@@ -38,6 +38,11 @@ export const routes: Routes = [
         title: 'Consultar reserva | Grupo Coppel',
       },
       {
+        path: 'consultar/:folio',
+        component: Consulta,
+        title: 'Consultar reserva | Grupo Coppel',
+      },
+      {
         path: 'calendario',
         component: Calendario,
         title: 'Disponibilidad de espacios | Grupo Coppel',
