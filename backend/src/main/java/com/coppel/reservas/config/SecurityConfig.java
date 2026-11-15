@@ -4,7 +4,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
@@ -33,7 +32,7 @@ public class SecurityConfig {
         http
             // CSRF protege formularios que usan cookies de sesión.
             // Esta API no usa cookies (usa tokens JWT), así que se desactiva.
-            .csrf(AbstractHttpConfigurer::disable)
+            .csrf(csrf -> csrf.disable())
 
             // Activa CORS con las reglas definidas más abajo en corsConfigurationSource()
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))

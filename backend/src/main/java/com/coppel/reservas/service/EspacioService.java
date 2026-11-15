@@ -9,7 +9,6 @@ import com.coppel.reservas.model.EstadoReserva;
 import com.coppel.reservas.repository.EspacioRepository;
 import com.coppel.reservas.repository.ReservaRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,13 +23,16 @@ public class EspacioService {
     private final EspacioRepository espacioRepository;
     private final ReservaRepository reservaRepository;
 
+    // Lista los espacios ordenados por id (la consulta la genera Spring a partir
+    // del nombre del método findAllByOrderByIdAsc del repositorio)
     @Transactional(readOnly = true)
     public List<EspacioResponse> listar() {
-        return espacioRepository.findAll(Sort.by("id")).stream()
+        return espacioRepository.findAllByOrderByIdAsc().stream()
                 .map(EspacioResponse::desde)
                 .toList();
     }
 
+    // Horario de atención y franjas ocupadas de un espacio en una fecha
     @Transactional(readOnly = true)
     public DisponibilidadResponse disponibilidad(Long espacioId, LocalDate fecha) {
         Espacio espacio = espacioRepository.findById(espacioId)
