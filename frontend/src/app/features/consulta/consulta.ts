@@ -1,9 +1,12 @@
 import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
+  AfterViewInit,
   Component,
   DestroyRef,
+  ElementRef,
   OnInit,
+  ViewChild,
   inject,
   signal,
 } from '@angular/core';
@@ -34,7 +37,11 @@ import {
   templateUrl: './consulta.html',
   styleUrl: './consulta.css',
 })
-export class Consulta implements OnInit {
+export class Consulta implements OnInit, AfterViewInit {
+  @ViewChild('folioInput') private folioInput?: ElementRef<HTMLInputElement>;
+
+  private enfocarFolioAlIniciar = false;
+
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly location = inject(Location);
@@ -79,6 +86,7 @@ export class Consulta implements OnInit {
         if (!/^\d+$/.test(folioUrl)) {
           this.error.set('El folio de la dirección solo puede contener dígitos.');
           this.noEncontrada.set(false);
+          this.enfocarFolio();
           return;
         }
 
@@ -87,11 +95,19 @@ export class Consulta implements OnInit {
       });
   }
 
+  ngAfterViewInit(): void {
+    if (this.enfocarFolioAlIniciar) {
+      this.folioInput?.nativeElement.focus();
+      this.enfocarFolioAlIniciar = false;
+    }
+  }
+
   /** Busca una reserva por folio y refleja el folio en la URL. */
   protected buscar(folioParam?: string): void {
     const folio = (folioParam ?? this.folio.value).replace(/\D/g, '').trim();
     if (!folio) {
       this.folio.markAsTouched();
+      this.enfocarFolio();
       return;
     }
 
@@ -175,6 +191,14 @@ export class Consulta implements OnInit {
         return 'accion-modificada';
       default:
         return 'accion-creada';
+    }
+  }
+
+  private enfocarFolio(): void {
+    if (this.folioInput) {
+      this.folioInput.nativeElement.focus();
+    } else {
+      this.enfocarFolioAlIniciar = true;
     }
   }
 }

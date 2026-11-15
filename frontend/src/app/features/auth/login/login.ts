@@ -1,7 +1,9 @@
 import {
   Component,
   DestroyRef,
+  ElementRef,
   OnInit,
+  ViewChild,
   inject,
   signal,
 } from '@angular/core';
@@ -24,7 +26,7 @@ import { obtenerMensajeError } from '../../../core/utils/error.utils';
  * 1. Valida correo y contraseña con Reactive Forms.
  * 2. Envía las credenciales a AuthService (POST /api/auth/login).
  * 3. Si el login es correcto, regresa a la pantalla protegida que el usuario
- *    intentaba abrir (returnUrl) o al panel de administración.
+ *    intentaba abrir (returnUrl) o a la gestión de reservas.
  * 4. Si falla, muestra el mensaje que devuelve la API.
  *
  * También muestra un aviso cuando el interceptor cierra la sesión porque
@@ -37,6 +39,9 @@ import { obtenerMensajeError } from '../../../core/utils/error.utils';
   styleUrl: './login.css',
 })
 export class Login implements OnInit {
+  @ViewChild('emailInput') private emailInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('passwordInput') private passwordInput?: ElementRef<HTMLInputElement>;
+
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
@@ -152,6 +157,10 @@ export class Login implements OnInit {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.error.set('Revisa los datos marcados en rojo.');
+      const primerCampoInvalido = this.email.invalid
+        ? this.emailInput
+        : this.passwordInput;
+      primerCampoInvalido?.nativeElement.focus();
       return;
     }
 
@@ -191,6 +200,10 @@ export class Login implements OnInit {
       returnUrl === '/admin' || returnUrl.startsWith('/admin/');
     const esLogin = returnUrl.startsWith('/admin/login');
 
-    return esRutaAdmin && !esLogin ? returnUrl : '/admin';
+    if (returnUrl === '/admin') {
+      return '/admin/reservas';
+    }
+
+    return esRutaAdmin && !esLogin ? returnUrl : '/admin/reservas';
   }
 }

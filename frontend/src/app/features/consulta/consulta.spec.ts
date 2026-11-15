@@ -85,6 +85,15 @@ describe('Consulta', () => {
     http.verify();
   });
 
+  it('enfoca el campo cuando se intenta buscar sin folio', () => {
+    componente.buscar();
+
+    expect(document.activeElement).toBe(
+      fixture.nativeElement.querySelector('#folio'),
+    );
+    expect(componente.folio.touched).toBeTrue();
+  });
+
   it('carga la reserva cuando el folio viene en la URL', () => {
     parametros.next(convertToParamMap({ folio: '2026000001' }));
 

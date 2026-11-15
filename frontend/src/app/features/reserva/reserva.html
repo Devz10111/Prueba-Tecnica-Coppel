@@ -64,7 +64,7 @@
   } @else {
     <!-- ================= ENCABEZADO ================= -->
     <header class="mb-4">
-      <span class="badge text-bg-warning mb-2">Grupo Coppel</span>
+      <span class="badge badge-coppel mb-2">Grupo Coppel</span>
       <h1 class="h3 fw-bold mb-1">Nueva reserva</h1>
       <p class="text-secondary mb-0">
         Completa los cuatro pasos. Tus datos se conservan al usar Anterior y Siguiente.
@@ -127,7 +127,11 @@
               </div>
 
               @if (cargandoEspacios()) {
-                <div class="d-flex align-items-center gap-2 text-secondary py-5 justify-content-center">
+                <div
+                  class="d-flex align-items-center gap-2 text-secondary py-5 justify-content-center"
+                  role="status"
+                  aria-live="polite"
+                >
                   <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
                   <span>Cargando espacios...</span>
                 </div>
@@ -292,7 +296,11 @@
                 </h3>
 
                 @if (cargandoDisponibilidad()) {
-                  <div class="d-flex align-items-center gap-2 text-secondary py-3">
+                  <div
+                    class="d-flex align-items-center gap-2 text-secondary py-3"
+                    role="status"
+                    aria-live="polite"
+                  >
                     <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
                     <span>Consultando disponibilidad...</span>
                   </div>
@@ -425,7 +433,7 @@
                 </div>
 
                 <div class="col-12 col-md-6">
-                  <label class="form-label fw-semibold">Estado al confirmar</label>
+                  <span class="form-label fw-semibold">Estado al confirmar</span>
                   <div class="form-control bg-light d-flex align-items-center">
                     <span class="badge text-bg-warning">PENDIENTE</span>
                     <span class="ms-2 text-secondary small">Requiere aprobación del administrador.</span>

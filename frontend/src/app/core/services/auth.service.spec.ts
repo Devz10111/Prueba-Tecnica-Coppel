@@ -1,4 +1,7 @@
-import { provideHttpClient } from '@angular/common/http';
+import {
+  HttpErrorResponse,
+  provideHttpClient,
+} from '@angular/common/http';
 import {
   HttpTestingController,
   provideHttpClientTesting,
@@ -64,6 +67,38 @@ describe('AuthService', () => {
     });
     expect(auth.estaAutenticado()).toBeTrue();
     expect(auth.obtenerRol()).toBe('ADMIN');
+  });
+
+  it('propaga el error de login y no guarda una sesión', () => {
+    let errorRecibido: HttpErrorResponse | undefined;
+
+    auth
+      .login({ email: 'admin@coppel.test', password: 'incorrecta' })
+      .subscribe({
+        error: (error: HttpErrorResponse) => {
+          errorRecibido = error;
+        },
+      });
+
+    const peticion = http.expectOne(`${API}/api/auth/login`);
+    expect(peticion.request.method).toBe('POST');
+    peticion.flush(
+      {
+        status: 401,
+        error: 'Unauthorized',
+        mensaje: 'Correo o contraseña incorrectos',
+        detalles: [],
+        fecha: '2026-11-14T10:00:00',
+      },
+      { status: 401, statusText: 'Unauthorized' },
+    );
+
+    expect(errorRecibido?.status).toBe(401);
+    expect(errorRecibido?.error.mensaje).toBe(
+      'Correo o contraseña incorrectos',
+    );
+    expect(auth.obtenerToken()).toBeNull();
+    expect(auth.usuarioActual()).toBeNull();
   });
 
   it('elimina la sesión al cerrar sesión', () => {

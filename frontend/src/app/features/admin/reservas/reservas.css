@@ -6,6 +6,11 @@
   min-width: 210px;
 }
 
+.buscador-flexible {
+  flex-grow: 1;
+  min-width: 0;
+}
+
 .tabla-reservas {
   min-width: 900px;
 }
@@ -15,7 +20,7 @@
 }
 
 .fila-seleccionada > * {
-  background-color: #fff8d6;
+  background-color: #eef2ff;
 }
 
 .detalle-reserva {
@@ -62,7 +67,7 @@
   height: 0.7rem;
   border: 2px solid #fff;
   border-radius: 50%;
-  background-color: var(--coppel-amarillo-oscuro);
+  background-color: var(--coppel-azul-oscuro);
   content: '';
 }
 

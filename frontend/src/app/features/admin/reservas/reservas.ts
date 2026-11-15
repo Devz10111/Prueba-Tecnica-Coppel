@@ -177,6 +177,16 @@ export class ReservasAdmin implements OnInit {
       });
   }
 
+  /** Repite la consulta del detalle seleccionado si la petición falló. */
+  protected reintentarDetalle(): void {
+    const seleccionada = this.reservas().find(
+      (reserva) => reserva.folio === this.folioSeleccionado(),
+    );
+    if (seleccionada) {
+      this.seleccionar(seleccionada);
+    }
+  }
+
   /** Envía la aprobación solo para reservas pendientes. */
   protected aprobar(): void {
     const reserva = this.detalle();
@@ -463,11 +473,18 @@ export class ReservasAdmin implements OnInit {
     return this.usuario()?.rol === 'ADMIN';
   }
 
+  /** Reintenta la carga del catálogo desde el formulario de modificación. */
+  protected reintentarCargaEspacios(): void {
+    this.cargarEspacios();
+  }
+
   protected puedeGuardarModificacion(): boolean {
     return (
       this.formularioEdicion.valid &&
       !this.enAccion() &&
       !this.cargandoEspacios() &&
+      !this.errorEspacios() &&
+      this.espacios().length > 0 &&
       !this.cargandoDisponibilidad() &&
       this.disponibilidadEdicion() !== null &&
       this.mensajesHorarioEdicion().length === 0
@@ -497,6 +514,7 @@ export class ReservasAdmin implements OnInit {
   /** Carga los espacios disponibles para el selector de modificación. */
   private cargarEspacios(): void {
     this.cargandoEspacios.set(true);
+    this.formularioEdicion.controls.espacioId.disable({ emitEvent: false });
     this.espaciosApi
       .listar()
       .pipe(
@@ -504,7 +522,14 @@ export class ReservasAdmin implements OnInit {
         finalize(() => this.cargandoEspacios.set(false)),
       )
       .subscribe({
-        next: (espacios) => this.espacios.set(espacios),
+        next: (espacios) => {
+          this.espacios.set(espacios);
+          if (espacios.length > 0) {
+            this.formularioEdicion.controls.espacioId.enable({
+              emitEvent: false,
+            });
+          }
+        },
         error: (error: unknown) =>
           this.errorEspacios.set(obtenerMensajeError(error)),
       });

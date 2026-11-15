@@ -1,6 +1,6 @@
 <section class="contenedor-consulta">
   <header class="mb-4">
-    <span class="badge text-bg-warning mb-2">Grupo Coppel</span>
+    <span class="badge badge-coppel mb-2">Grupo Coppel</span>
     <h1 class="h3 fw-bold mb-1">Consultar reserva</h1>
     <p class="text-secondary mb-0">
       Escribe el folio para ver los detalles, el estado y el historial de cambios.
@@ -20,6 +20,7 @@
 
           <input
             id="folio"
+            #folioInput
             type="text"
             class="form-control"
             formControlName="folio"
@@ -70,6 +71,16 @@
           {{ noEncontrada() ? 'No encontramos esa reserva' : 'No pudimos consultar la reserva' }}
         </h2>
         <p class="mb-0">{{ mensaje }}</p>
+        @if (!noEncontrada()) {
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-danger mt-3"
+            (click)="buscar()"
+            [disabled]="buscando()"
+          >
+            Reintentar consulta
+          </button>
+        }
       </div>
     </div>
   }

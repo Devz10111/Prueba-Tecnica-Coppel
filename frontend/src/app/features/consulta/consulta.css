@@ -55,8 +55,8 @@
   height: 1.15rem;
   border: 3px solid #fff;
   border-radius: 50%;
-  background-color: var(--coppel-amarillo);
-  box-shadow: 0 0 0 2px var(--coppel-amarillo-oscuro);
+  background-color: var(--coppel-azul);
+  box-shadow: 0 0 0 2px var(--coppel-azul-oscuro);
 }
 
 .punto.accion-aprobada {

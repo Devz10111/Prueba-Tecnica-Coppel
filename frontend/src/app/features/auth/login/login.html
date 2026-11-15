@@ -44,6 +44,7 @@
             </span>
             <input
               id="email"
+              #emailInput
               type="email"
               class="form-control"
               formControlName="email"
@@ -51,7 +52,7 @@
               placeholder="nombre@coppel.com"
               [class.is-invalid]="errorEmail() !== null"
               [attr.aria-invalid]="errorEmail() !== null"
-              aria-describedby="email-error"
+              [attr.aria-describedby]="errorEmail() !== null ? 'email-error' : null"
             />
           </div>
           @if (errorEmail(); as mensaje) {
@@ -72,6 +73,7 @@
             </span>
             <input
               id="password"
+              #passwordInput
               [type]="mostrarPassword() ? 'text' : 'password'"
               class="form-control"
               formControlName="password"
@@ -79,7 +81,9 @@
               placeholder="Tu contraseña"
               [class.is-invalid]="errorPassword() !== null"
               [attr.aria-invalid]="errorPassword() !== null"
-              aria-describedby="password-error"
+              [attr.aria-describedby]="
+                errorPassword() !== null ? 'password-error' : null
+              "
             />
             <button
               class="btn btn-outline-secondary"

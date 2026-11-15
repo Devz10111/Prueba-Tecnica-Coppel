@@ -136,6 +136,7 @@ describe('Reserva', () => {
   it('valida duración, rango y traslapes en tiempo real', () => {
     prepararFormulario([
       { horaInicio: '09:00:00', horaFin: '10:00:00', estado: 'PENDIENTE' },
+      { horaInicio: '11:00:00', horaFin: '12:00:00', estado: 'APROBADA' },
     ]);
 
     componente.form.controls.horaInicio.setValue('09:30');
@@ -150,6 +151,12 @@ describe('Reserva', () => {
     expect(componente.mensajesHorario()).toEqual([]);
     expect(componente.paso2Valido()).toBeTrue();
 
+    componente.form.controls.horaInicio.setValue('11:30');
+    componente.form.controls.horaFin.setValue('12:30');
+    expect(componente.mensajesHorario().join(' ')).toContain('traslapa');
+    expect(componente.paso2Valido()).toBeFalse();
+
+    componente.form.controls.horaInicio.setValue('10:00');
     componente.form.controls.horaFin.setValue('10:15');
     expect(componente.mensajesHorario().join(' ')).toContain(
       'al menos 30 minutos',

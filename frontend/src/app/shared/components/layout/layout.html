@@ -2,7 +2,7 @@
 <div class="d-flex flex-column min-vh-100">
 
   <!-- ================= BARRA DE NAVEGACIÓN ================= -->
-  <nav class="navbar navbar-expand-lg navbar-light navbar-coppel shadow-sm">
+  <nav class="navbar navbar-expand-lg navbar-dark navbar-coppel shadow-sm">
     <div class="container">
 
       <!-- Marca: siempre lleva al inicio. -->
@@ -11,7 +11,13 @@
         routerLink="/"
         (click)="cerrarMenu()"
       >
-        <i class="bi bi-buildings fs-5"></i>
+        <img
+          class="logo-coppel"
+          src="/logo.png"
+          alt="Coppel"
+          width="140"
+          height="78"
+        />
         <span>Reserva de Espacios</span>
       </a>
 
@@ -88,10 +94,12 @@
             >
               <span class="navbar-text text-lg-end lh-sm">
                 <span class="d-block fw-semibold">{{ sesion.nombre }}</span>
-                <span class="badge text-bg-dark">{{ rolTexto(sesion.rol) }}</span>
+                <span class="badge text-bg-light text-primary">
+                  {{ rolTexto(sesion.rol) }}
+                </span>
               </span>
               <button
-                class="btn btn-sm btn-outline-dark"
+                class="btn btn-sm btn-outline-light"
                 type="button"
                 (click)="cerrarSesion()"
               >
@@ -101,7 +109,7 @@
           } @else {
             <li class="nav-item ms-lg-3">
               <a
-                class="nav-link text-dark opacity-75"
+                class="nav-link"
                 routerLink="/admin/login"
                 routerLinkActive="active"
                 (click)="cerrarMenu()"
@@ -117,7 +125,7 @@
 
   <!-- ================= CONTENIDO DE CADA RUTA ================= -->
   <main class="flex-grow-1">
-    <div class="container py-4 py-md-5">
+    <div class="container py-4 py-md-5 contenido-ruta">
       <!-- Aquí Angular carga la pantalla que corresponde a la URL actual. -->
       <router-outlet />
     </div>

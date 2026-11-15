@@ -1,7 +1,7 @@
 <section class="admin-reservas">
   <header class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
     <div>
-      <span class="badge text-bg-warning mb-2">Administración</span>
+      <span class="badge badge-coppel mb-2">Administración</span>
       <h1 class="h2 fw-bold mb-1">Gestión de reservas</h1>
       <p class="text-secondary mb-0">
         Consulta solicitudes, revisa su historial y administra su estado.
@@ -44,7 +44,7 @@
       <section class="card border-0 shadow-sm">
         <div class="card-body">
           <div class="d-flex flex-column flex-md-row gap-3 mb-3">
-            <div class="flex-grow-1">
+            <div class="buscador-flexible">
               <label class="form-label fw-semibold" for="buscar-folio">
                 Buscar por folio
               </label>
@@ -83,7 +83,7 @@
           }
 
           @if (cargando()) {
-            <div class="text-center text-secondary py-5" role="status">
+            <div class="text-center text-secondary py-5" role="status" aria-live="polite">
               <span class="spinner-border spinner-border-sm me-2"></span>
               Cargando reservas...
             </div>
@@ -152,13 +152,29 @@
         <section class="card border-0 shadow-sm detalle-reserva">
           <div class="card-body p-4">
             @if (cargandoDetalle()) {
-              <div class="text-center text-secondary py-5" role="status">
+              <div class="text-center text-secondary py-5" role="status" aria-live="polite">
                 <span class="spinner-border spinner-border-sm me-2"></span>
                 Cargando detalle...
               </div>
             } @else if (errorDetalle(); as mensaje) {
-              <div class="alert alert-danger mb-0" role="alert">{{ mensaje }}</div>
+              <div class="alert alert-danger mb-0" role="alert">
+                <p class="mb-3">{{ mensaje }}</p>
+                <button
+                  class="btn btn-sm btn-outline-danger"
+                  type="button"
+                  (click)="reintentarDetalle()"
+                >
+                  Reintentar
+                </button>
+              </div>
             } @else if (detalle(); as reserva) {
+              @if (enAccion()) {
+                <div class="small text-primary mb-3" role="status" aria-live="polite">
+                  <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                  Procesando solicitud...
+                </div>
+              }
+
               <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
                 <div>
                   <span class="small text-secondary">Folio</span>
@@ -267,8 +283,28 @@
                   novalidate
                 >
                   <h3 class="h6 fw-bold mb-3">Modificar espacio y horario</h3>
+                  @if (cargandoEspacios()) {
+                    <div class="small text-secondary mb-3" role="status" aria-live="polite">
+                      <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                      Cargando espacios...
+                    </div>
+                  }
                   @if (errorEspacios(); as mensaje) {
-                    <div class="alert alert-danger py-2" role="alert">{{ mensaje }}</div>
+                    <div class="alert alert-danger py-2" role="alert">
+                      <p class="mb-2">{{ mensaje }}</p>
+                      <button
+                        class="btn btn-sm btn-outline-danger"
+                        type="button"
+                        (click)="reintentarCargaEspacios()"
+                      >
+                        Reintentar carga de espacios
+                      </button>
+                    </div>
+                  }
+                  @if (!cargandoEspacios() && !errorEspacios() && espacios().length === 0) {
+                    <div class="alert alert-warning py-2" role="status">
+                      No hay espacios disponibles para modificar esta reserva.
+                    </div>
                   }
                   <div class="mb-3">
                     <label class="form-label" for="espacio-edicion">Espacio</label>
@@ -322,7 +358,7 @@
                     </div>
                   </div>
                   @if (cargandoDisponibilidad()) {
-                    <div class="small text-secondary mt-2" role="status">
+                    <div class="small text-secondary mt-2" role="status" aria-live="polite">
                       <span class="spinner-border spinner-border-sm me-1"></span>
                       Consultando disponibilidad...
                     </div>

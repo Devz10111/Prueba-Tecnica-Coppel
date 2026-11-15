@@ -4,7 +4,7 @@ Plataforma web para gestionar reservas de espacios internos (salas de reuniones,
 
 Proyecto desarrollado como prueba técnica.
 
-> **Estado actual:** backend con el portal del empleado y el login con JWT terminados y probados. En desarrollo: endpoints del administrador y frontend en Angular.
+> **Estado actual:** API REST y frontend Angular implementados. El backend incluye el portal del empleado, disponibilidad, autenticación JWT y administración de reservas.
 
 ## Tecnologías
 
@@ -13,8 +13,8 @@ Proyecto desarrollado como prueba técnica.
 | Backend | Java 25, Spring Boot 4.1.2, Spring Data JPA (Hibernate), Spring Security |
 | Base de datos | PostgreSQL 18 |
 | Autenticación | JWT (HS256) y bcrypt para contraseñas |
-| Frontend | Angular 20 (en desarrollo) |
-| Herramientas | Maven (wrapper incluido), Lombok, Postman |
+| Frontend | Angular 20, TypeScript, Bootstrap 5 |
+| Herramientas | Maven (wrapper incluido), npm, Lombok, Postman |
 
 ## Estructura del repositorio
 
@@ -29,7 +29,10 @@ Prueba-Tecnica-Coppel/
 │       ├── model/           Entidades JPA y enums
 │       ├── repository/      Acceso a datos (Spring Data JPA)
 │       └── service/         Reglas de negocio
-├── frontend/                Cliente Angular (pendiente)
+├── frontend/                Aplicación Angular standalone
+│   ├── public/              Recursos estáticos (logo)
+│   └── src/app/             Pantallas, rutas, servicios y lógica compartida
+├── GUIA_FRONTEND.md         Guía para presentar la arquitectura Angular
 └── README.md
 ```
 
@@ -39,7 +42,7 @@ El backend sigue una arquitectura en capas (controlador, servicio, repositorio, 
 
 - JDK 25 (o 21 como mínimo)
 - PostgreSQL 18
-- Node.js 22 y Angular CLI 20 (solo para el frontend)
+- Node.js 22 y npm (Angular CLI se instala con las dependencias del frontend)
 - Git
 
 ## Puesta en marcha del backend
@@ -71,6 +74,44 @@ El backend sigue una arquitectura en capas (controlador, servicio, repositorio, 
 5. La API queda disponible en `http://localhost:8080`.
 
 Al arrancar por primera vez, Hibernate crea las tablas automáticamente y se cargan los datos iniciales (espacios y usuarios de prueba). Los datos no se duplican al reiniciar.
+
+La documentación interactiva de la API está disponible en [Swagger UI](http://localhost:8080/swagger-ui/index.html).
+
+## Puesta en marcha del frontend
+
+1. Asegúrate de que el backend esté ejecutándose en `http://localhost:8080`.
+2. Desde la raíz del repositorio, entra a `frontend` e instala las dependencias:
+
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+3. Inicia el servidor de desarrollo:
+
+   ```bash
+   npm start
+   ```
+
+   El script `npm start` ejecuta `ng serve`. También puedes iniciar Angular directamente con `npx ng serve`. `ng start` no es un comando del Angular CLI.
+
+4. Abre `http://localhost:4200`.
+
+El backend permite solicitudes CORS desde `http://localhost:4200`.
+
+### Pantallas del frontend
+
+| Ruta | Pantalla | Función |
+|---|---|---|
+| `/` | Inicio | Acceso a reserva, consulta y disponibilidad |
+| `/reservar` | Nueva reserva | Formulario en cuatro pasos con validación de horarios |
+| `/consultar` | Consulta por folio | Muestra datos, estado e historial de una reserva |
+| `/consultar/{folio}` | Consulta directa | Abre la consulta con el folio indicado |
+| `/calendario` | Disponibilidad | Consulta espacios y franjas ocupadas por fecha |
+| `/admin/login` | Acceso administrador | Inicio de sesión para usuarios administrativos |
+| `/admin/reservas` | Gestión de reservas | Lista, detalle, historial y acciones administrativas |
+
+La ruta `/admin` redirige a `/admin/reservas`. Las rutas de administración están protegidas por sesión.
 
 ### Variables opcionales
 
@@ -109,19 +150,15 @@ Las contraseñas se almacenan cifradas con bcrypt.
 | POST | `/api/reservas` | Público | Crea una solicitud de reserva y devuelve su folio |
 | GET | `/api/reservas/{folio}` | Público | Consulta una reserva y su historial de cambios |
 | POST | `/api/auth/login` | Público | Inicia sesión y devuelve un JWT |
-
-### En desarrollo
-
-| Método | Ruta | Acceso | Descripción |
-|---|---|---|---|
 | GET | `/api/espacios` | Público | Lista los espacios y su capacidad |
-| GET | `/api/espacios/{id}/disponibilidad` | Público | Horarios ocupados de un espacio en una fecha |
-| GET | `/api/admin/reservas` | Administrador | Lista todas las reservas |
-| PUT | `/api/admin/reservas/{folio}/estado` | Administrador | Aprueba o rechaza una reserva |
-| PUT | `/api/admin/reservas/{folio}` | Administrador | Modifica una reserva (fecha, hora, espacio) |
-| DELETE | `/api/admin/reservas/{folio}` | Administrador | Cancela una reserva |
+| GET | `/api/espacios/{id}/disponibilidad?fecha=YYYY-MM-DD` | Público | Horarios ocupados de un espacio en una fecha |
+| GET | `/api/admin/reservas?estado=PENDIENTE` | ADMIN, JEFE_DEPARTAMENTO | Lista reservas; el filtro `estado` es opcional |
+| GET | `/api/admin/reservas/{folio}` | ADMIN, JEFE_DEPARTAMENTO | Consulta detalle e historial de una reserva |
+| PUT | `/api/admin/reservas/{folio}/estado` | ADMIN, JEFE_DEPARTAMENTO | Aprueba o rechaza una reserva pendiente |
+| PUT | `/api/admin/reservas/{folio}` | ADMIN, JEFE_DEPARTAMENTO | Modifica espacio, fecha y horario |
+| DELETE | `/api/admin/reservas/{folio}` | Solo ADMIN | Cancela una reserva |
 
-Las rutas `/api/admin/**` requieren el encabezado `Authorization: Bearer <token>`.
+Todas las rutas `/api/admin/**` requieren el encabezado `Authorization: Bearer <token>`.
 
 ### Ejemplo: crear una reserva
 
@@ -220,11 +257,9 @@ Se probaron con Postman los siguientes casos del portal del empleado y del login
 - Login correcto, credenciales incorrectas y datos inválidos.
 - Acceso a rutas de administración sin token, con token válido y con token alterado.
 
-## Pendiente
+El frontend cuenta con pruebas unitarias para servicios HTTP, autenticación, guardas y reglas de reserva. Para ejecutarlas, consulta la sección de pruebas de [GUIA_FRONTEND.md](./GUIA_FRONTEND.md).
 
-- Endpoints del administrador (listar, aprobar o rechazar, modificar y cancelar).
-- Endpoints de espacios y disponibilidad.
-- Documentación con Swagger.
-- Pruebas unitarias y de integración automatizadas.
-- Frontend en Angular: formulario de reserva en cuatro pasos, consulta por folio, calendario de disponibilidad y panel de administración.
-- Leer la contraseña de la base de datos desde una variable de entorno.
+## Consideraciones para producción
+
+- Configura `DB_PASSWORD` y `JWT_SECRET` con valores seguros en el entorno de despliegue; los valores predeterminados son solo para desarrollo.
+- Sustituye las credenciales de prueba antes de publicar la aplicación.

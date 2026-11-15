@@ -40,9 +40,9 @@
 }
 
 .paso-indicador.activo .numero {
-  background-color: var(--coppel-amarillo);
-  color: var(--coppel-texto);
-  box-shadow: 0 0 0 0.2rem rgba(255, 209, 0, 0.25);
+  background-color: var(--coppel-azul);
+  color: #fff;
+  box-shadow: 0 0 0 0.2rem rgba(28, 67, 233, 0.25);
 }
 
 .paso-indicador.completado {
@@ -54,14 +54,14 @@
   color: #fff;
 }
 
-/* La barra usa el amarillo de la marca en lugar del azul de Bootstrap. */
+/* La barra usa el azul de la marca. */
 .progress {
   height: 0.65rem;
   background-color: #e9ecef;
 }
 
 .barra-progreso {
-  background-color: var(--coppel-amarillo);
+  background-color: var(--coppel-azul);
 }
 
 /* En teléfonos se ocultan los títulos para dejar solo los números. */
@@ -80,20 +80,20 @@
 
 .tarjeta-espacio:hover,
 .tarjeta-espacio:focus-within {
-  border-color: var(--coppel-amarillo-oscuro);
+  border-color: var(--coppel-azul-oscuro);
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08);
   transform: translateY(-2px);
 }
 
 .tarjeta-espacio.seleccionado {
-  border-color: var(--coppel-amarillo-oscuro);
-  background-color: #fffdf0;
-  box-shadow: 0 0 0 0.2rem rgba(255, 209, 0, 0.22);
+  border-color: var(--coppel-azul-oscuro);
+  background-color: #eef2ff;
+  box-shadow: 0 0 0 0.2rem rgba(28, 67, 233, 0.2);
 }
 
 .tarjeta-espacio .form-check-input:checked {
-  background-color: #212529;
-  border-color: #212529;
+  background-color: var(--coppel-azul);
+  border-color: var(--coppel-azul);
 }
 
 .icono-espacio {
@@ -103,8 +103,8 @@
   width: 3rem;
   height: 3rem;
   border-radius: 50%;
-  background-color: #fff3cd;
-  color: #7a5c00;
+  background-color: #eef2ff;
+  color: var(--coppel-azul);
   font-size: 1.25rem;
 }
 
@@ -121,9 +121,9 @@
   align-items: center;
   gap: 0.35rem;
   padding: 1rem 2.5rem;
-  border: 2px dashed var(--coppel-amarillo-oscuro);
+  border: 2px dashed var(--coppel-azul-oscuro);
   border-radius: 1rem;
-  background-color: #fffdf0;
+  background-color: #eef2ff;
 }
 
 .folio-etiqueta {

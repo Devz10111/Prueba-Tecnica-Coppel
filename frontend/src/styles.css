@@ -11,11 +11,17 @@
 /* Iconos oficiales de Bootstrap (bi bi-calendar, bi bi-search, etc.). */
 @import 'bootstrap-icons/font/bootstrap-icons.css';
 
-/* Colores de la marca usados por el layout y el formulario de reserva. */
+/* Colores de marca tomados del logo y compartidos por todas las pantallas. */
 :root {
-  --coppel-amarillo: #ffd100;
-  --coppel-amarillo-oscuro: #d9b200;
+  --coppel-azul: #1c43e9;
+  --coppel-azul-oscuro: #1535b8;
   --coppel-texto: #212529;
+}
+
+/* Insignias de marca mantienen el azul exacto del logo. */
+.badge-coppel {
+  background-color: var(--coppel-azul);
+  color: #fff;
 }
 
 /* Fondo general claro para todas las pantallas. */
@@ -27,6 +33,29 @@ body {
 html,
 body {
   min-height: 100%;
+}
+
+/* Las pantallas aparecen suavemente al cambiar de ruta. */
+.contenido-ruta > router-outlet + * {
+  animation: entrada-ruta 220ms ease-out both;
+}
+
+@keyframes entrada-ruta {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contenido-ruta > router-outlet + * {
+    animation: none;
+  }
 }
 
 /* Resúmenes de datos usados en la confirmación y en la consulta. */

@@ -2,32 +2,48 @@
 
 .navbar-brand {
   letter-spacing: 0.02em;
+  color: #fff;
 }
 
-/* Barra superior con el amarillo de Grupo Coppel y texto oscuro. */
+.logo-coppel {
+  display: block;
+  width: 64px;
+  height: 36px;
+  object-fit: contain;
+}
+
+@media (min-width: 992px) {
+  .logo-coppel {
+    width: 140px;
+    height: 78px;
+  }
+}
+
+/* La barra usa el azul extraído del fondo del logo. */
 .navbar-coppel {
-  background-color: var(--coppel-amarillo);
+  background-color: var(--coppel-azul);
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 /* Transición suave al pasar el mouse por los enlaces. */
 .navbar .nav-link {
+  color: rgba(255, 255, 255, 0.82);
   transition: color 0.15s ease;
 }
 
 .navbar-coppel .nav-link:hover,
 .navbar-coppel .nav-link.active {
-  color: #000;
+  color: #fff;
 }
 
 .navbar-coppel .nav-link.active {
   font-weight: 600;
 }
 
-/* Pie de página con el mismo color de marca. */
+/* Pie de página con el mismo azul del encabezado. */
 .footer-coppel {
-  background-color: var(--coppel-amarillo);
-  color: var(--coppel-texto);
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background-color: var(--coppel-azul);
+  color: #fff;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
   font-size: 0.875rem;
 }

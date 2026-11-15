@@ -88,12 +88,15 @@ describe('Login', () => {
     expect(auth.login).not.toHaveBeenCalled();
     expect(componente.form.controls.email.touched).toBeTrue();
     expect(componente.form.controls.password.touched).toBeTrue();
+    expect(document.activeElement).toBe(
+      fixture.nativeElement.querySelector('#email'),
+    );
     expect(fixture.nativeElement.textContent).toContain(
       'Escribe tu correo electrónico.',
     );
   });
 
-  it('envía las credenciales sin espacios y navega al panel', () => {
+  it('envía las credenciales sin espacios y navega a la gestión de reservas', () => {
     crear();
 
     componente.form.setValue({
@@ -106,7 +109,7 @@ describe('Login', () => {
       email: 'admin@coppel.test',
       password: 'Admin123!',
     });
-    expect(router.navigateByUrl).toHaveBeenCalledOnceWith('/admin', {
+    expect(router.navigateByUrl).toHaveBeenCalledOnceWith('/admin/reservas', {
       replaceUrl: true,
     });
   });
@@ -134,7 +137,7 @@ describe('Login', () => {
     });
     componente.iniciarSesion();
 
-    expect(router.navigateByUrl).toHaveBeenCalledOnceWith('/admin', {
+    expect(router.navigateByUrl).toHaveBeenCalledOnceWith('/admin/reservas', {
       replaceUrl: true,
     });
   });
@@ -188,7 +191,7 @@ describe('Login', () => {
 
     crear(convertToParamMap({ returnUrl: '/admin' }));
 
-    expect(router.navigateByUrl).toHaveBeenCalledOnceWith('/admin', {
+    expect(router.navigateByUrl).toHaveBeenCalledOnceWith('/admin/reservas', {
       replaceUrl: true,
     });
   });

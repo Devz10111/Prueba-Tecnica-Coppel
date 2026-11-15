@@ -4,14 +4,14 @@
   margin: 0 auto;
 }
 
-/* Tarjeta con esquinas suaves y un borde superior del color de Coppel. */
+/* Tarjeta con esquinas suaves y un borde superior del azul del logo. */
 .login-card {
   border-radius: 1rem;
-  border-top: 4px solid var(--coppel-amarillo) !important;
+  border-top: 4px solid var(--coppel-azul) !important;
   overflow: hidden;
 }
 
-/* Círculo amarillo con el icono de seguridad. */
+/* Círculo azul con el icono de seguridad. */
 .login-icono {
   display: inline-flex;
   align-items: center;
@@ -19,8 +19,8 @@
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background-color: var(--coppel-amarillo);
-  color: var(--coppel-texto);
+  background-color: var(--coppel-azul);
+  color: #fff;
   font-size: 1.75rem;
 }
 
@@ -30,29 +30,29 @@
   color: #6c757d;
 }
 
-/* El foco usa el amarillo de la marca en lugar del azul de Bootstrap. */
+/* El foco usa el azul de marca del logo. */
 .login-card .form-control:focus {
-  border-color: var(--coppel-amarillo-oscuro);
-  box-shadow: 0 0 0 0.2rem rgba(255, 209, 0, 0.25);
+  border-color: var(--coppel-azul);
+  box-shadow: 0 0 0 0.2rem rgba(28, 67, 233, 0.25);
 }
 
 /* Botón principal con el color de la marca. */
 .btn-login {
-  background-color: var(--coppel-amarillo);
-  border-color: var(--coppel-amarillo-oscuro);
-  color: var(--coppel-texto);
+  background-color: var(--coppel-azul);
+  border-color: var(--coppel-azul-oscuro);
+  color: #fff;
 }
 
 .btn-login:hover,
 .btn-login:focus {
-  background-color: var(--coppel-amarillo-oscuro);
-  border-color: var(--coppel-amarillo-oscuro);
-  color: var(--coppel-texto);
+  background-color: var(--coppel-azul-oscuro);
+  border-color: var(--coppel-azul-oscuro);
+  color: #fff;
 }
 
 .btn-login:disabled {
-  background-color: var(--coppel-amarillo);
-  border-color: var(--coppel-amarillo-oscuro);
-  color: var(--coppel-texto);
+  background-color: var(--coppel-azul);
+  border-color: var(--coppel-azul-oscuro);
+  color: #fff;
   opacity: 0.7;
 }

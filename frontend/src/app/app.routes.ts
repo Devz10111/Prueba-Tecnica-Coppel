@@ -1,12 +1,6 @@
 import { Routes } from '@angular/router';
 
 import { adminGuard } from './core/guards/admin.guard';
-import { Panel } from './features/admin/panel/panel';
-import { Login } from './features/auth/login/login';
-import { Calendario } from './features/calendario/calendario';
-import { Consulta } from './features/consulta/consulta';
-import { Inicio } from './features/inicio/inicio';
-import { Reserva } from './features/reserva/reserva';
 import { Layout } from './shared/components/layout/layout';
 
 /**
@@ -25,33 +19,41 @@ export const routes: Routes = [
     children: [
       {
         path: '',
-        component: Inicio,
+        loadComponent: () =>
+          import('./features/inicio/inicio').then((modulo) => modulo.Inicio),
         title: 'Reserva de Espacios | Grupo Coppel',
       },
       {
         path: 'reservar',
-        component: Reserva,
+        loadComponent: () =>
+          import('./features/reserva/reserva').then((modulo) => modulo.Reserva),
         title: 'Nueva reserva | Grupo Coppel',
       },
       {
         path: 'consultar',
-        component: Consulta,
+        loadComponent: () =>
+          import('./features/consulta/consulta').then((modulo) => modulo.Consulta),
         title: 'Consultar reserva | Grupo Coppel',
       },
       {
         path: 'consultar/:folio',
-        component: Consulta,
+        loadComponent: () =>
+          import('./features/consulta/consulta').then((modulo) => modulo.Consulta),
         title: 'Consultar reserva | Grupo Coppel',
       },
       {
         path: 'calendario',
-        component: Calendario,
+        loadComponent: () =>
+          import('./features/calendario/calendario').then(
+            (modulo) => modulo.Calendario,
+          ),
         title: 'Disponibilidad de espacios | Grupo Coppel',
       },
       // El login es público: queda fuera del guard.
       {
         path: 'admin/login',
-        component: Login,
+        loadComponent: () =>
+          import('./features/auth/login/login').then((modulo) => modulo.Login),
         title: 'Acceso administrador | Grupo Coppel',
       },
       {
@@ -62,8 +64,8 @@ export const routes: Routes = [
         children: [
           {
             path: '',
-            component: Panel,
-            title: 'Panel de administración | Grupo Coppel',
+            pathMatch: 'full',
+            redirectTo: 'reservas',
           },
           {
             path: 'reservas',
@@ -73,8 +75,8 @@ export const routes: Routes = [
               ),
             title: 'Gestión de reservas | Grupo Coppel',
           },
-          // Cualquier ruta desconocida dentro de /admin regresa al panel.
-          { path: '**', redirectTo: '' },
+          // Cualquier ruta desconocida dentro de /admin regresa a la gestión.
+          { path: '**', redirectTo: 'reservas' },
         ],
       },
     ],
