@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 
+import { adminGuard } from './core/guards/admin.guard';
 import { Panel } from './features/admin/panel/panel';
 import { Login } from './features/auth/login/login';
 import { Calendario } from './features/calendario/calendario';
@@ -47,15 +48,34 @@ export const routes: Routes = [
         component: Calendario,
         title: 'Disponibilidad de espacios | Grupo Coppel',
       },
+      // El login es público: queda fuera del guard.
       {
         path: 'admin/login',
         component: Login,
         title: 'Acceso administrador | Grupo Coppel',
       },
       {
+        // Ruta padre sin componente: solo agrupa las rutas protegidas.
+        // El guard se ejecuta antes de entrar a cualquier hija.
         path: 'admin',
-        component: Panel,
-        title: 'Panel de administración | Grupo Coppel',
+        canActivate: [adminGuard],
+        children: [
+          {
+            path: '',
+            component: Panel,
+            title: 'Panel de administración | Grupo Coppel',
+          },
+          {
+            path: 'reservas',
+            loadComponent: () =>
+              import('./features/admin/reservas/reservas').then(
+                (modulo) => modulo.ReservasAdmin,
+              ),
+            title: 'Gestión de reservas | Grupo Coppel',
+          },
+          // Cualquier ruta desconocida dentro de /admin regresa al panel.
+          { path: '**', redirectTo: '' },
+        ],
       },
     ],
   },

@@ -1,0 +1,130 @@
+<!-- Contenedor centrado y con ancho máximo para que el formulario se lea bien. -->
+<section class="login-pantalla">
+  <div class="card login-card border-0 shadow-sm">
+    <div class="card-body p-4 p-md-5">
+
+      <!-- Encabezado de la pantalla. -->
+      <div class="text-center mb-4">
+        <span class="login-icono">
+          <i class="bi bi-shield-lock"></i>
+        </span>
+        <h1 class="h3 fw-bold mt-3 mb-2">Acceso administrador</h1>
+        <p class="text-secondary mb-0">
+          Ingresa con tu cuenta corporativa para gestionar las reservas.
+        </p>
+      </div>
+
+      <!-- Aviso informativo: sesión expirada o intento de entrar a /admin. -->
+      @if (aviso(); as mensaje) {
+        <div class="alert alert-warning d-flex align-items-start gap-2" role="status">
+          <i class="bi bi-info-circle-fill mt-1"></i>
+          <span>{{ mensaje }}</span>
+        </div>
+      }
+
+      <!-- Error devuelto por la API (credenciales incorrectas, red, etc.). -->
+      @if (error(); as mensaje) {
+        <div class="alert alert-danger d-flex align-items-start gap-2" role="alert">
+          <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+          <span>{{ mensaje }}</span>
+        </div>
+      }
+
+      <!-- novalidate evita los mensajes del navegador: usamos los de Angular. -->
+      <form [formGroup]="form" (ngSubmit)="iniciarSesion()" novalidate>
+
+        <!-- Campo de correo electrónico. -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="email">
+            Correo electrónico
+          </label>
+          <div class="input-group">
+            <span class="input-group-text">
+              <i class="bi bi-envelope"></i>
+            </span>
+            <input
+              id="email"
+              type="email"
+              class="form-control"
+              formControlName="email"
+              autocomplete="username"
+              placeholder="nombre@coppel.com"
+              [class.is-invalid]="errorEmail() !== null"
+              [attr.aria-invalid]="errorEmail() !== null"
+              aria-describedby="email-error"
+            />
+          </div>
+          @if (errorEmail(); as mensaje) {
+            <div id="email-error" class="invalid-feedback d-block">
+              {{ mensaje }}
+            </div>
+          }
+        </div>
+
+        <!-- Campo de contraseña con botón para mostrar u ocultar. -->
+        <div class="mb-4">
+          <label class="form-label fw-semibold" for="password">
+            Contraseña
+          </label>
+          <div class="input-group">
+            <span class="input-group-text">
+              <i class="bi bi-lock"></i>
+            </span>
+            <input
+              id="password"
+              [type]="mostrarPassword() ? 'text' : 'password'"
+              class="form-control"
+              formControlName="password"
+              autocomplete="current-password"
+              placeholder="Tu contraseña"
+              [class.is-invalid]="errorPassword() !== null"
+              [attr.aria-invalid]="errorPassword() !== null"
+              aria-describedby="password-error"
+            />
+            <button
+              class="btn btn-outline-secondary"
+              type="button"
+              (click)="alternarPassword()"
+              [attr.aria-label]="
+                mostrarPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'
+              "
+            >
+              <i
+                class="bi"
+                [class.bi-eye]="!mostrarPassword()"
+                [class.bi-eye-slash]="mostrarPassword()"
+              ></i>
+            </button>
+          </div>
+          @if (errorPassword(); as mensaje) {
+            <div id="password-error" class="invalid-feedback d-block">
+              {{ mensaje }}
+            </div>
+          }
+        </div>
+
+        <!-- Botón de envío con indicador de carga. -->
+        <button class="btn btn-login w-100 py-2 fw-semibold" type="submit" [disabled]="enviando()">
+          @if (enviando()) {
+            <span
+              class="spinner-border spinner-border-sm me-2"
+              role="status"
+              aria-hidden="true"
+            ></span>
+            Ingresando...
+          } @else {
+            <i class="bi bi-box-arrow-in-right me-1"></i>
+            Iniciar sesión
+          }
+        </button>
+      </form>
+
+      <!-- Regreso a la parte pública del sitio. -->
+      <div class="text-center mt-4">
+        <a class="link-secondary text-decoration-none" routerLink="/">
+          <i class="bi bi-arrow-left me-1"></i>Volver al inicio
+        </a>
+      </div>
+    </div>
+  </div>
+</section>

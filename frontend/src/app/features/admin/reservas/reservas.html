@@ -1,0 +1,398 @@
+<section class="admin-reservas">
+  <header class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
+    <div>
+      <span class="badge text-bg-warning mb-2">Administración</span>
+      <h1 class="h2 fw-bold mb-1">Gestión de reservas</h1>
+      <p class="text-secondary mb-0">
+        Consulta solicitudes, revisa su historial y administra su estado.
+      </p>
+    </div>
+    <button
+      class="btn btn-outline-dark align-self-md-start"
+      type="button"
+      (click)="cargarReservas()"
+      [disabled]="cargando()"
+    >
+      <i class="bi bi-arrow-clockwise me-1"></i>Actualizar lista
+    </button>
+  </header>
+
+  @if (notificacion(); as aviso) {
+    <div
+      class="alert d-flex align-items-start gap-2"
+      [class.alert-success]="aviso.tipo === 'exito'"
+      [class.alert-danger]="aviso.tipo === 'error'"
+      [attr.role]="aviso.tipo === 'error' ? 'alert' : 'status'"
+    >
+      <i
+        class="bi mt-1"
+        [class.bi-check-circle-fill]="aviso.tipo === 'exito'"
+        [class.bi-exclamation-triangle-fill]="aviso.tipo === 'error'"
+      ></i>
+      <span>{{ aviso.mensaje }}</span>
+      <button
+        class="btn-close ms-auto"
+        type="button"
+        aria-label="Cerrar notificación"
+        (click)="notificacion.set(null)"
+      ></button>
+    </div>
+  }
+
+  <div class="row g-4 align-items-start">
+    <div class="col-12" [class.col-xl-7]="detalle()" [class.col-xl-12]="!detalle()">
+      <section class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="d-flex flex-column flex-md-row gap-3 mb-3">
+            <div class="flex-grow-1">
+              <label class="form-label fw-semibold" for="buscar-folio">
+                Buscar por folio
+              </label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input
+                  id="buscar-folio"
+                  class="form-control"
+                  type="search"
+                  placeholder="Ej. 2026000001"
+                  [value]="busqueda()"
+                  (input)="cambiarBusqueda($event)"
+                />
+              </div>
+            </div>
+            <div class="filtro-estado">
+              <label class="form-label fw-semibold" for="filtro-estado">
+                Filtrar por estado
+              </label>
+              <select
+                id="filtro-estado"
+                class="form-select"
+                [value]="filtroEstado()"
+                (change)="cambiarFiltro($event)"
+              >
+                <option value="">Todos los estados</option>
+                @for (estado of estados; track estado) {
+                  <option [value]="estado">{{ etiquetaEstado(estado) }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          @if (errorLista(); as mensaje) {
+            <div class="alert alert-danger" role="alert">{{ mensaje }}</div>
+          }
+
+          @if (cargando()) {
+            <div class="text-center text-secondary py-5" role="status">
+              <span class="spinner-border spinner-border-sm me-2"></span>
+              Cargando reservas...
+            </div>
+          } @else if (reservasVisibles().length === 0) {
+            <div class="text-center text-secondary py-5">
+              <i class="bi bi-inbox display-6 d-block mb-2"></i>
+              No hay reservas que coincidan con los filtros.
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0 tabla-reservas">
+                <thead class="table-light">
+                  <tr>
+                    <th scope="col">Folio</th>
+                    <th scope="col">Espacio</th>
+                    <th scope="col">Fecha</th>
+                    <th scope="col">Horario</th>
+                    <th scope="col">Estado</th>
+                    <th scope="col">Solicitante</th>
+                    <th scope="col">Departamento</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (reserva of reservasVisibles(); track reserva.folio) {
+                    <tr
+                      class="fila-reserva"
+                      [class.fila-seleccionada]="folioSeleccionado() === reserva.folio"
+                      (click)="seleccionar(reserva)"
+                    >
+                      <td>
+                        <button
+                          class="btn btn-link p-0 fw-semibold text-nowrap"
+                          type="button"
+                          (click)="seleccionar(reserva); $event.stopPropagation()"
+                        >
+                          {{ reserva.folio }}
+                        </button>
+                      </td>
+                      <td>{{ reserva.espacio }}</td>
+                      <td class="text-nowrap">{{ fechaLarga(reserva.fecha) }}</td>
+                      <td class="text-nowrap">
+                        {{ horaCorta(reserva.horaInicio) }}–{{ horaCorta(reserva.horaFin) }}
+                      </td>
+                      <td>
+                        <span class="badge" [class]="claseEstado(reserva.estado)">
+                          {{ etiquetaEstado(reserva.estado) }}
+                        </span>
+                      </td>
+                      <td>{{ reserva.solicitante }}</td>
+                      <td>{{ reserva.departamento }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <p class="small text-secondary mt-3 mb-0">
+              {{ reservasVisibles().length }} reserva(s)
+            </p>
+          }
+        </div>
+      </section>
+    </div>
+
+    @if (detalle() || cargandoDetalle() || errorDetalle()) {
+      <div class="col-12 col-xl-5">
+        <section class="card border-0 shadow-sm detalle-reserva">
+          <div class="card-body p-4">
+            @if (cargandoDetalle()) {
+              <div class="text-center text-secondary py-5" role="status">
+                <span class="spinner-border spinner-border-sm me-2"></span>
+                Cargando detalle...
+              </div>
+            } @else if (errorDetalle(); as mensaje) {
+              <div class="alert alert-danger mb-0" role="alert">{{ mensaje }}</div>
+            } @else if (detalle(); as reserva) {
+              <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+                <div>
+                  <span class="small text-secondary">Folio</span>
+                  <h2 class="h4 fw-bold mb-0">{{ reserva.folio }}</h2>
+                </div>
+                <span class="badge fs-6" [class]="claseEstado(reserva.estado)">
+                  {{ etiquetaEstado(reserva.estado) }}
+                </span>
+              </div>
+
+              <dl class="row resumen-admin small mb-3">
+                <dt class="col-5">Espacio</dt>
+                <dd class="col-7">{{ reserva.espacio }}</dd>
+                <dt class="col-5">Fecha</dt>
+                <dd class="col-7">{{ fechaLarga(reserva.fecha) }}</dd>
+                <dt class="col-5">Horario</dt>
+                <dd class="col-7">
+                  {{ horaCorta(reserva.horaInicio) }}–{{ horaCorta(reserva.horaFin) }}
+                </dd>
+                <dt class="col-5">Solicitante</dt>
+                <dd class="col-7">{{ reserva.solicitante }}</dd>
+                <dt class="col-5">Departamento</dt>
+                <dd class="col-7">{{ reserva.departamento }}</dd>
+                <dt class="col-5">Descripción</dt>
+                <dd class="col-7 texto-descripcion">{{ reserva.descripcion }}</dd>
+              </dl>
+
+              <div class="d-flex flex-wrap gap-2 mb-4">
+                @if (reserva.estado === 'PENDIENTE') {
+                  <button
+                    class="btn btn-success btn-sm"
+                    type="button"
+                    (click)="aprobar()"
+                    [disabled]="enAccion()"
+                  >
+                    <i class="bi bi-check-lg me-1"></i>Aprobar
+                  </button>
+                  <button
+                    class="btn btn-outline-danger btn-sm"
+                    type="button"
+                    (click)="abrirRechazo()"
+                    [disabled]="enAccion()"
+                  >
+                    <i class="bi bi-x-lg me-1"></i>Rechazar
+                  </button>
+                }
+                @if (puedeModificar(reserva.estado)) {
+                  <button
+                    class="btn btn-outline-primary btn-sm"
+                    type="button"
+                    (click)="iniciarModificacion()"
+                    [disabled]="enAccion() || editando()"
+                  >
+                    <i class="bi bi-pencil me-1"></i>Modificar
+                  </button>
+                  @if (puedeCancelar()) {
+                    <button
+                      class="btn btn-outline-secondary btn-sm"
+                      type="button"
+                      (click)="cancelarReserva()"
+                      [disabled]="enAccion()"
+                    >
+                      <i class="bi bi-trash me-1"></i>Cancelar reserva
+                    </button>
+                  }
+                }
+              </div>
+
+              @if (mostrarRechazo()) {
+                <div class="panel-accion mb-4">
+                  <label class="form-label fw-semibold" for="comentario-rechazo">
+                    Comentario (opcional)
+                  </label>
+                  <textarea
+                    id="comentario-rechazo"
+                    class="form-control mb-2"
+                    rows="3"
+                    [value]="comentarioRechazo()"
+                    (input)="actualizarComentario($event)"
+                  ></textarea>
+                  <div class="d-flex justify-content-end gap-2">
+                    <button
+                      class="btn btn-light btn-sm"
+                      type="button"
+                      (click)="mostrarRechazo.set(false)"
+                    >
+                      Volver
+                    </button>
+                    <button
+                      class="btn btn-danger btn-sm"
+                      type="button"
+                      (click)="rechazar()"
+                      [disabled]="enAccion()"
+                    >
+                      Confirmar rechazo
+                    </button>
+                  </div>
+                </div>
+              }
+
+              @if (editando()) {
+                <form
+                  class="panel-accion mb-4"
+                  [formGroup]="formularioEdicion"
+                  (ngSubmit)="guardarModificacion()"
+                  novalidate
+                >
+                  <h3 class="h6 fw-bold mb-3">Modificar espacio y horario</h3>
+                  @if (errorEspacios(); as mensaje) {
+                    <div class="alert alert-danger py-2" role="alert">{{ mensaje }}</div>
+                  }
+                  <div class="mb-3">
+                    <label class="form-label" for="espacio-edicion">Espacio</label>
+                    <select
+                      id="espacio-edicion"
+                      class="form-select"
+                      formControlName="espacioId"
+                    >
+                      <option [ngValue]="null">Selecciona un espacio</option>
+                      @for (espacio of espacios(); track espacio.id) {
+                        <option [ngValue]="espacio.id">
+                          {{ espacio.nombre }} (cap. {{ espacio.capacidad }})
+                        </option>
+                      }
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label" for="fecha-edicion">Fecha</label>
+                    <input
+                      id="fecha-edicion"
+                      class="form-control"
+                      type="date"
+                      [min]="hoy"
+                      formControlName="fecha"
+                    />
+                    @if (formularioEdicion.controls.fecha.touched &&
+                        formularioEdicion.controls.fecha.hasError('fechaPasada')) {
+                      <div class="text-danger small mt-1">
+                        La fecha no puede ser anterior a hoy.
+                      </div>
+                    }
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-6">
+                      <label class="form-label" for="inicio-edicion">Hora de inicio</label>
+                      <input
+                        id="inicio-edicion"
+                        class="form-control"
+                        type="time"
+                        formControlName="horaInicio"
+                      />
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label" for="fin-edicion">Hora de fin</label>
+                      <input
+                        id="fin-edicion"
+                        class="form-control"
+                        type="time"
+                        formControlName="horaFin"
+                      />
+                    </div>
+                  </div>
+                  @if (cargandoDisponibilidad()) {
+                    <div class="small text-secondary mt-2" role="status">
+                      <span class="spinner-border spinner-border-sm me-1"></span>
+                      Consultando disponibilidad...
+                    </div>
+                  }
+                  @if (errorDisponibilidad(); as mensaje) {
+                    <div class="alert alert-danger py-2 mt-3 mb-0" role="alert">
+                      {{ mensaje }}
+                    </div>
+                  }
+                  @for (mensaje of mensajesHorarioEdicion(); track mensaje) {
+                    <div class="text-danger small mt-2">{{ mensaje }}</div>
+                  }
+                  @if (disponibilidadEdicion(); as disponibilidad) {
+                    <div class="small text-secondary mt-2">
+                      Horario de atención: {{ horaCorta(disponibilidad.horaApertura) }}–{{
+                        horaCorta(disponibilidad.horaCierre)
+                      }}
+                    </div>
+                  }
+                  <div class="d-flex justify-content-end gap-2 mt-3">
+                    <button
+                      class="btn btn-light btn-sm"
+                      type="button"
+                      (click)="cancelarEdicion()"
+                    >
+                      Descartar
+                    </button>
+                    <button
+                      class="btn btn-primary btn-sm"
+                      type="submit"
+                      [disabled]="!puedeGuardarModificacion()"
+                    >
+                      @if (enAccion()) {
+                        <span class="spinner-border spinner-border-sm me-1"></span>
+                      }
+                      Guardar cambios
+                    </button>
+                  </div>
+                </form>
+              }
+
+              <div class="historial-admin">
+                <h3 class="h6 fw-bold mb-3">
+                  <i class="bi bi-clock-history me-1"></i>Historial de cambios
+                </h3>
+                @if (reserva.historial.length === 0) {
+                  <p class="small text-secondary mb-0">No hay movimientos registrados.</p>
+                } @else {
+                  <ol class="list-unstyled mb-0">
+                    @for (cambio of reserva.historial; track cambio.fecha + cambio.accion + $index) {
+                      <li class="movimiento-historial">
+                        <div class="d-flex justify-content-between gap-2">
+                          <strong>{{ cambio.accion }}</strong>
+                          <time class="small text-secondary text-nowrap">
+                            {{ fechaHora(cambio.fecha) }}
+                          </time>
+                        </div>
+                        <p class="small mb-1">{{ cambio.detalle }}</p>
+                        <span class="small text-secondary">
+                          <i class="bi bi-person me-1"></i>{{ cambio.usuario }}
+                        </span>
+                      </li>
+                    }
+                  </ol>
+                }
+              </div>
+            }
+          </div>
+        </section>
+      </div>
+    }
+  </div>
+</section>

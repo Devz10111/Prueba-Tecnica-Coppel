@@ -1,0 +1,84 @@
+.admin-reservas {
+  min-width: 0;
+}
+
+.filtro-estado {
+  min-width: 210px;
+}
+
+.tabla-reservas {
+  min-width: 900px;
+}
+
+.fila-reserva {
+  cursor: pointer;
+}
+
+.fila-seleccionada > * {
+  background-color: #fff8d6;
+}
+
+.detalle-reserva {
+  position: sticky;
+  top: 1rem;
+}
+
+.resumen-admin dt {
+  color: #5c636a;
+  font-weight: 600;
+}
+
+.resumen-admin dd {
+  overflow-wrap: anywhere;
+}
+
+.texto-descripcion {
+  white-space: pre-line;
+}
+
+.panel-accion {
+  padding: 1rem;
+  border: 1px solid #dee2e6;
+  border-radius: 0.75rem;
+  background-color: #f8f9fa;
+}
+
+.movimiento-historial {
+  position: relative;
+  padding: 0 0 1rem 1rem;
+  border-left: 2px solid #dee2e6;
+}
+
+.movimiento-historial:last-child {
+  padding-bottom: 0;
+  border-left-color: transparent;
+}
+
+.movimiento-historial::before {
+  position: absolute;
+  top: 0.25rem;
+  left: -0.4rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background-color: var(--coppel-amarillo-oscuro);
+  content: '';
+}
+
+@media (max-width: 1199.98px) {
+  .detalle-reserva {
+    position: static;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .filtro-estado {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .detalle-reserva .card-body {
+    padding: 1rem !important;
+  }
+}

@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 
 import { API_CONFIG } from '../config/api.config';
@@ -28,6 +28,17 @@ export class AuthService {
   private readonly CLAVE_USUARIO = 'coppel_usuario';
 
   /**
+   * Datos del usuario en un signal para que el navbar se actualice solo
+   * cuando se inicia o cierra sesión, sin recargar la página.
+   */
+  private readonly usuarioSesion = signal<DatosUsuarioSesion | null>(
+    this.leerUsuarioGuardado(),
+  );
+
+  /** Versión de solo lectura que pueden consumir los componentes. */
+  readonly usuarioActual = this.usuarioSesion.asReadonly();
+
+  /**
    * POST /api/auth/login
    *
    * `tap` permite ejecutar un efecto secundario (guardar la sesión)
@@ -51,6 +62,7 @@ export class AuthService {
   logout(): void {
     localStorage.removeItem(this.CLAVE_TOKEN);
     localStorage.removeItem(this.CLAVE_USUARIO);
+    this.usuarioSesion.set(null);
   }
 
   /**
@@ -66,6 +78,7 @@ export class AuthService {
 
     localStorage.setItem(this.CLAVE_TOKEN, respuesta.token);
     localStorage.setItem(this.CLAVE_USUARIO, JSON.stringify(usuario));
+    this.usuarioSesion.set(usuario);
   }
 
   /**
@@ -80,17 +93,65 @@ export class AuthService {
    * Si el JSON almacenado está dañado, limpia la sesión para evitar errores.
    */
   obtenerUsuario(): DatosUsuarioSesion | null {
+    const usuario = this.leerUsuarioGuardado();
+    this.usuarioSesion.set(usuario);
+    return usuario;
+  }
+
+  /**
+   * Lee el usuario desde localStorage sin tocar el signal.
+   * Se usa al crear el servicio y al consultar la sesión actual.
+   */
+  private leerUsuarioGuardado(): DatosUsuarioSesion | null {
     const guardado = localStorage.getItem(this.CLAVE_USUARIO);
-    if (!guardado) {
+    const token = localStorage.getItem(this.CLAVE_TOKEN);
+
+    if (!guardado || !token) {
+      if (guardado || token) {
+        this.limpiarSesionGuardada();
+      }
       return null;
     }
 
     try {
-      return JSON.parse(guardado) as DatosUsuarioSesion;
+      const usuario: unknown = JSON.parse(guardado);
+      if (
+        !usuario ||
+        typeof usuario !== 'object' ||
+        !('nombre' in usuario) ||
+        typeof usuario.nombre !== 'string' ||
+        !('rol' in usuario) ||
+        (usuario.rol !== 'ADMIN' &&
+          usuario.rol !== 'JEFE_DEPARTAMENTO') ||
+        !('expiraEn' in usuario) ||
+        typeof usuario.expiraEn !== 'string'
+      ) {
+        this.limpiarSesionGuardada();
+        return null;
+      }
+
+      const expiracion = new Date(usuario.expiraEn).getTime();
+      if (Number.isNaN(expiracion) || expiracion <= Date.now()) {
+        this.limpiarSesionGuardada();
+        return null;
+      }
+
+      return {
+        nombre: usuario.nombre,
+        rol: usuario.rol,
+        expiraEn: usuario.expiraEn,
+      };
     } catch {
-      this.logout();
+      // Si el JSON está dañado, se elimina la sesión para evitar errores.
+      this.limpiarSesionGuardada();
       return null;
     }
+  }
+
+  /** Elimina ambas piezas de la sesión cuando están incompletas o inválidas. */
+  private limpiarSesionGuardada(): void {
+    localStorage.removeItem(this.CLAVE_TOKEN);
+    localStorage.removeItem(this.CLAVE_USUARIO);
   }
 
   /**
@@ -102,14 +163,10 @@ export class AuthService {
     const usuario = this.obtenerUsuario();
 
     if (!token || !usuario) {
-      return false;
-    }
-
-    const expiracion = new Date(usuario.expiraEn).getTime();
-    const expirada = Number.isNaN(expiracion) || expiracion <= Date.now();
-
-    if (expirada) {
-      this.logout();
+      // Si queda solo una de las dos partes, la sesión está incompleta.
+      if (token || usuario) {
+        this.logout();
+      }
       return false;
     }
 

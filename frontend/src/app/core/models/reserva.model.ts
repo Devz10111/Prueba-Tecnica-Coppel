@@ -64,3 +64,17 @@ export interface ReservaResumen {
   solicitante: string;
   departamento: string;
 }
+
+/** Datos para aprobar o rechazar una reserva pendiente. */
+export interface CambioEstadoRequest {
+  estado: Extract<EstadoReserva, 'APROBADA' | 'RECHAZADA'>;
+  comentario?: string;
+}
+
+/** Datos editables desde el panel de administración. */
+export interface ReservaModificacionRequest {
+  espacioId: number;
+  fecha: string;      // "YYYY-MM-DD"
+  horaInicio: string; // "HH:mm"
+  horaFin: string;    // "HH:mm"
+}

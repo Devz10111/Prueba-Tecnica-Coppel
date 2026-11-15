@@ -1,5 +1,13 @@
-import { Component, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
+import {
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet,
+} from '@angular/router';
+
+import { RolUsuario } from '../../../core/models';
+import { AuthService } from '../../../core/services/auth.service';
 
 /**
  * Layout general de la aplicación.
@@ -19,11 +27,20 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
   styleUrl: './layout.css',
 })
 export class Layout {
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+
   /**
    * Controla si el menú de navegación está abierto en teléfonos y tabletas.
    * Es un "signal": Angular avisa automáticamente a la plantilla cuando cambia.
    */
   protected readonly menuAbierto = signal(false);
+
+  /**
+   * Usuario de la sesión actual. Es el signal de AuthService, así que el
+   * navbar cambia solo al iniciar o cerrar sesión.
+   */
+  protected readonly usuario = this.auth.usuarioActual;
 
   /** Año actual mostrado en el pie de página. */
   protected readonly anioActual = new Date().getFullYear();
@@ -36,5 +53,20 @@ export class Layout {
   /** Cierra el menú al navegar a otra pantalla. */
   protected cerrarMenu(): void {
     this.menuAbierto.set(false);
+  }
+
+  /**
+   * Cierra la sesión y lleva al login.
+   * El token se borra en AuthService; el navbar se actualiza por el signal.
+   */
+  protected cerrarSesion(): void {
+    this.cerrarMenu();
+    this.auth.logout();
+    void this.router.navigate(['/admin/login']);
+  }
+
+  /** Texto legible del rol para mostrarlo en la barra. */
+  protected rolTexto(rol: RolUsuario): string {
+    return rol === 'ADMIN' ? 'Administrador' : 'Jefe de departamento';
   }
 }

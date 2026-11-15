@@ -25,15 +25,10 @@ import {
   formatearHoraCorta,
 } from '../../core/utils/fecha.utils';
 import { horaAMinutos } from '../../core/utils/hora.utils';
-
-/** Validador: la fecha no puede ser anterior a hoy. */
-function fechaNoPasada(control: AbstractControl): ValidationErrors | null {
-  const valor = typeof control.value === 'string' ? control.value : '';
-  if (!valor) {
-    return null;
-  }
-  return valor < fechaLocal(new Date()) ? { fechaPasada: true } : null;
-}
+import {
+  fechaNoPasada,
+  mensajesReglasHorario,
+} from '../../core/utils/reserva-validation.utils';
 
 /** Validador: el texto no puede quedar vacío ni contener solo espacios. */
 function textoNoVacio(control: AbstractControl): ValidationErrors | null {
@@ -488,85 +483,45 @@ export class Reserva implements OnInit {
   protected mensajesHorario(): string[] {
     const inicioValor = this.form.controls.horaInicio.value;
     const finValor = this.form.controls.horaFin.value;
-
-    if (!inicioValor && !finValor) {
-      return [];
-    }
-
-    if (!inicioValor || !finValor) {
-      return ['Selecciona la hora de inicio y la hora de fin.'];
-    }
-
+    const mensajes = mensajesReglasHorario(
+      this.form.controls.fecha.value,
+      inicioValor,
+      finValor,
+    );
     const inicio = horaAMinutos(inicioValor);
     const fin = horaAMinutos(finValor);
-
-    if (inicio === null || fin === null) {
-      return ['Usa un formato de hora válido (HH:mm).'];
+    if (inicio === null || fin === null || fin <= inicio) {
+      return mensajes;
     }
 
-    const apertura = horaAMinutos(this.horaApertura) ?? 8 * 60;
-    const cierre = horaAMinutos(this.horaCierre) ?? 20 * 60;
-    const mensajes: string[] = [];
+    const disponibilidad = this.disponibilidad();
+    if (disponibilidad) {
+      const conflictos = disponibilidad.ocupados.filter((ocupacion) => {
+        const ocupadoInicio = horaAMinutos(ocupacion.horaInicio);
+        const ocupadoFin = horaAMinutos(ocupacion.horaFin);
 
-    if (fin <= inicio) {
-      mensajes.push('La hora de fin debe ser posterior a la hora de inicio.');
-    } else {
-      if (fin - inicio < this.minimoMinutos) {
-        mensajes.push(
-          `La reserva debe durar al menos ${this.minimoMinutos} minutos.`,
+        return (
+          ocupadoInicio !== null &&
+          ocupadoFin !== null &&
+          inicio < ocupadoFin &&
+          fin > ocupadoInicio
         );
-      }
+      });
 
-      if (inicio < apertura || fin > cierre) {
+      if (conflictos.length > 0) {
+        const franjas = conflictos
+          .map(
+            (ocupacion) =>
+              `${this.horaCorta(ocupacion.horaInicio)}–${this.horaCorta(ocupacion.horaFin)}`,
+          )
+          .join(', ');
         mensajes.push(
-          `El horario debe estar entre ${this.horaApertura} y ${this.horaCierre}.`,
+          `El horario se traslapa con una reserva existente (${franjas}).`,
         );
-      }
-
-      if (this.inicioEnPasado(inicio)) {
-        mensajes.push(
-          'La fecha y hora de inicio ya pasaron. Elige un horario futuro.',
-        );
-      }
-
-      const disponibilidad = this.disponibilidad();
-      if (disponibilidad) {
-        const conflictos = disponibilidad.ocupados.filter((ocupacion) => {
-          const ocupadoInicio = horaAMinutos(ocupacion.horaInicio);
-          const ocupadoFin = horaAMinutos(ocupacion.horaFin);
-
-          if (ocupadoInicio === null || ocupadoFin === null) {
-            return false;
-          }
-          return inicio < ocupadoFin && fin > ocupadoInicio;
-        });
-
-        if (conflictos.length > 0) {
-          const franjas = conflictos
-            .map(
-              (ocupacion) =>
-                `${this.horaCorta(ocupacion.horaInicio)}–${this.horaCorta(ocupacion.horaFin)}`,
-            )
-            .join(', ');
-          mensajes.push(
-            `El horario se traslapa con una reserva existente (${franjas}).`,
-          );
-        }
       }
     }
 
     return mensajes;
-  }
-
-  /** Valida que, si la fecha es hoy, la hora de inicio todavía no haya pasado. */
-  private inicioEnPasado(inicio: number): boolean {
-    const fecha = this.form.controls.fecha.value;
-    if (!fecha || fecha !== fechaLocal(new Date())) {
-      return false;
-    }
-
-    const ahora = new Date();
-    return inicio <= ahora.getHours() * 60 + ahora.getMinutes();
   }
 
   /** Mensajes de validación de los campos del paso 3. */

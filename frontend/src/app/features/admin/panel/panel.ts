@@ -15,7 +15,10 @@ import { RouterLink } from '@angular/router';
       <p class="text-secondary mb-4">
         Este módulo está en construcción. Aquí se gestionarán las reservas.
       </p>
-      <a class="btn btn-outline-primary" routerLink="/">Volver al inicio</a>
+      <a class="btn btn-outline-primary me-2" routerLink="/admin/reservas">
+        <i class="bi bi-list-check me-1"></i>Gestionar reservas
+      </a>
+      <a class="btn btn-outline-secondary" routerLink="/">Volver al inicio</a>
     </section>
   `,
 })
