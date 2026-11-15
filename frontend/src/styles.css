@@ -11,6 +11,13 @@
 /* Iconos oficiales de Bootstrap (bi bi-calendar, bi bi-search, etc.). */
 @import 'bootstrap-icons/font/bootstrap-icons.css';
 
+/* Colores de la marca usados por el layout y el formulario de reserva. */
+:root {
+  --coppel-amarillo: #ffd100;
+  --coppel-amarillo-oscuro: #d9b200;
+  --coppel-texto: #212529;
+}
+
 /* Fondo general claro para todas las pantallas. */
 body {
   background-color: #f8f9fa;

@@ -1,0 +1,158 @@
+/* El formulario no ocupa todo el ancho en pantallas grandes. */
+.contenedor-reserva {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+/* ================= INDICADOR DE PASOS ================= */
+.paso-indicador {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+  color: #6c757d;
+}
+
+.paso-indicador .numero {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background-color: #e9ecef;
+  color: #495057;
+  font-weight: 700;
+}
+
+.paso-indicador .titulo {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.paso-indicador.activo {
+  color: var(--coppel-texto);
+}
+
+.paso-indicador.activo .numero {
+  background-color: var(--coppel-amarillo);
+  color: var(--coppel-texto);
+  box-shadow: 0 0 0 0.2rem rgba(255, 209, 0, 0.25);
+}
+
+.paso-indicador.completado {
+  color: #198754;
+}
+
+.paso-indicador.completado .numero {
+  background-color: #198754;
+  color: #fff;
+}
+
+/* La barra usa el amarillo de la marca en lugar del azul de Bootstrap. */
+.progress {
+  height: 0.65rem;
+  background-color: #e9ecef;
+}
+
+.barra-progreso {
+  background-color: var(--coppel-amarillo);
+}
+
+/* En teléfonos se ocultan los títulos para dejar solo los números. */
+@media (max-width: 575.98px) {
+  .paso-indicador .titulo {
+    display: none;
+  }
+}
+
+/* ================= TARJETAS DE ESPACIOS ================= */
+.tarjeta-espacio {
+  cursor: pointer;
+  border: 2px solid #dee2e6;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.tarjeta-espacio:hover,
+.tarjeta-espacio:focus-within {
+  border-color: var(--coppel-amarillo-oscuro);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.tarjeta-espacio.seleccionado {
+  border-color: var(--coppel-amarillo-oscuro);
+  background-color: #fffdf0;
+  box-shadow: 0 0 0 0.2rem rgba(255, 209, 0, 0.22);
+}
+
+.tarjeta-espacio .form-check-input:checked {
+  background-color: #212529;
+  border-color: #212529;
+}
+
+.icono-espacio {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background-color: #fff3cd;
+  color: #7a5c00;
+  font-size: 1.25rem;
+}
+
+/* ================= RESÚMENES ================= */
+.resumen dt {
+  font-weight: 600;
+  color: #495057;
+}
+
+.resumen dd {
+  margin-bottom: 0.75rem;
+}
+
+.descripcion-resumen {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* ================= CONFIRMACIÓN ================= */
+.icono-exito {
+  color: #198754;
+  font-size: clamp(3.5rem, 10vw, 5rem);
+  line-height: 1;
+}
+
+.folio-destacado {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1rem 2.5rem;
+  border: 2px dashed var(--coppel-amarillo-oscuro);
+  border-radius: 1rem;
+  background-color: #fffdf0;
+}
+
+.folio-etiqueta {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #6c757d;
+}
+
+.folio {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: clamp(1.75rem, 6vw, 2.75rem);
+  line-height: 1;
+  letter-spacing: 0.05em;
+  overflow-wrap: anywhere;
+}

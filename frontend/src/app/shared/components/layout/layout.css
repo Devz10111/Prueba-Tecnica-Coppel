@@ -4,20 +4,30 @@
   letter-spacing: 0.02em;
 }
 
+/* Barra superior con el amarillo de Grupo Coppel y texto oscuro. */
+.navbar-coppel {
+  background-color: var(--coppel-amarillo);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
 /* Transición suave al pasar el mouse por los enlaces. */
 .navbar .nav-link {
   transition: color 0.15s ease;
 }
 
-.navbar .nav-link:hover,
-.navbar .nav-link.active {
-  color: #fff;
+.navbar-coppel .nav-link:hover,
+.navbar-coppel .nav-link.active {
+  color: #000;
 }
 
-.navbar .nav-link.active {
+.navbar-coppel .nav-link.active {
   font-weight: 600;
 }
 
-footer {
+/* Pie de página con el mismo color de marca. */
+.footer-coppel {
+  background-color: var(--coppel-amarillo);
+  color: var(--coppel-texto);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
   font-size: 0.875rem;
 }
