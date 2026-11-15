@@ -3,6 +3,7 @@ package com.coppel.reservas.repository;
 import com.coppel.reservas.model.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -15,4 +16,10 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     // Se usará en el login para buscar al usuario por su correo.
     // Optional indica que puede no existir (evita trabajar con null).
     Optional<Usuario> findByEmail(String email);
+
+    boolean existsByEmailIgnoreCase(String email);
+
+    boolean existsByEmailIgnoreCaseAndIdNot(String email, Long id);
+
+    List<Usuario> findAllByOrderByNombreAscEmailAsc();
 }

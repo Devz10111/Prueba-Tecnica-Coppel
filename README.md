@@ -4,7 +4,7 @@ Plataforma web para gestionar reservas de espacios internos (salas de reuniones,
 
 Proyecto desarrollado como prueba técnica.
 
-> **Estado actual:** API REST y frontend Angular implementados. El backend incluye el portal del empleado, disponibilidad, autenticación JWT y administración de reservas.
+> **Estado actual:** API REST y frontend Angular implementados. Incluye reservas autenticadas por usuario, disponibilidad, administración de reservas y gestión de cuentas por ADMIN.
 
 ## Tecnologías
 
@@ -32,6 +32,7 @@ Prueba-Tecnica-Coppel/
 ├── frontend/                Aplicación Angular standalone
 │   ├── public/              Recursos estáticos (logo)
 │   └── src/app/             Pantallas, rutas, servicios y lógica compartida
+├── docs/capturas/            Capturas actuales de las pantallas principales
 └── README.md
 ```
 
@@ -39,7 +40,7 @@ El backend sigue una arquitectura en capas (controlador, servicio, repositorio, 
 
 ## Requisitos previos
 
-- JDK 25 (o 21 como mínimo)
+- JDK 25 (versión configurada en Maven)
 - PostgreSQL 18
 - Node.js 22 y npm (Angular CLI se instala con las dependencias del frontend)
 - Git
@@ -54,27 +55,27 @@ El backend sigue una arquitectura en capas (controlador, servicio, repositorio, 
    CREATE DATABASE reservas_db;
    ```
 
-3. **Configura la conexión** en `backend/src/main/resources/application.properties`:
+3. **Configura las variables de entorno.** Para el perfil de desarrollo, la contraseña local de PostgreSQL tiene un valor predeterminado (`123456`); puedes reemplazarla con `DB_PASSWORD`.
 
-   ```properties
-   spring.datasource.url=jdbc:postgresql://localhost:5432/reservas_db
-   spring.datasource.username=postgres
-   spring.datasource.password=TU_CONTRASEÑA
+   En PowerShell:
+
+   ```powershell
+   $env:DB_PASSWORD = "TU_CONTRASEÑA"
    ```
 
-4. **Ejecuta la aplicación** desde la carpeta `backend`:
+4. **Ejecuta la aplicación** desde la carpeta `backend` con el perfil `dev`:
 
    ```bash
-   ./mvnw spring-boot:run
+   ./mvnw -Dspring-boot.run.profiles=dev spring-boot:run
    ```
 
-   En Windows (PowerShell): `.\mvnw spring-boot:run`
+   En Windows (PowerShell): `.\mvnw.cmd -Dspring-boot.run.profiles=dev spring-boot:run`
 
 5. La API queda disponible en `http://localhost:8080`.
 
 Al arrancar por primera vez, Hibernate crea las tablas automáticamente y se cargan los datos iniciales (espacios y usuarios de prueba). Los datos no se duplican al reiniciar.
 
-La documentación interactiva de la API está disponible en [Swagger UI](http://localhost:8080/swagger-ui/index.html).
+Swagger UI solo se habilita con el perfil `dev`: [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html). Sin ese perfil, la clave `JWT_SECRET` y la contraseña `DB_PASSWORD` deben configurarse en el entorno.
 
 ## Puesta en marcha del frontend
 
@@ -107,12 +108,17 @@ El backend permite solicitudes CORS desde `http://localhost:4200`.
 | `/consultar` | Consulta por folio | Muestra datos, estado e historial de una reserva |
 | `/consultar/{folio}` | Consulta directa | Abre la consulta con el folio indicado |
 | `/calendario` | Disponibilidad | Consulta espacios y franjas ocupadas por fecha |
-| `/admin/login` | Acceso administrador | Inicio de sesión para usuarios administrativos |
+| `/login` | Inicio de sesión | Acceso único para empleados y administradores |
+| `/admin/login` | Redirección | Redirige al inicio de sesión único |
 | `/admin/reservas` | Gestión de reservas | Lista, detalle, historial y acciones administrativas |
+| `/admin/usuarios` | Gestión de usuarios | Consulta, alta, edición y eliminación de cuentas; solo ADMIN |
+| `/mis-reservas` | Mis reservas | Consulta las reservas creadas por la cuenta autenticada |
 
-La ruta `/admin` redirige a `/admin/reservas`. Las rutas de administración están protegidas por sesión.
+La ruta `/admin` redirige a `/admin/reservas`. Reservar, consultar folios y ver **Mis reservas** requieren sesión. La disponibilidad sigue siendo pública. Las rutas administrativas admiten solo `ADMIN` y `JEFE_DEPARTAMENTO`; la gestión de usuarios es exclusiva de `ADMIN`.
 
 ### Capturas de la interfaz
+
+Las capturas muestran la interfaz actual con datos de ejemplo; no contienen datos reales.
 
 #### Inicio
 
@@ -122,15 +128,26 @@ La ruta `/admin` redirige a `/admin/reservas`. Las rutas de administración est�
 
 <img src="./docs/capturas/reserva.png" alt="Primer paso del formulario de nueva reserva" width="900">
 
-#### Acceso administrador
+#### Inicio de sesión
 
-<img src="./docs/capturas/login-admin.png" alt="Pantalla de inicio de sesión del administrador" width="900">
+<img src="./docs/capturas/login.png" alt="Pantalla de inicio de sesión única para empleados y administradores" width="1000">
 
-### Variables opcionales
+#### Panel de administración: reservas
+
+<img src="./docs/capturas/admin-reservas.png" alt="Panel de reservas con estados y filtros" width="1000">
+
+#### Panel de administración: usuarios
+
+<img src="./docs/capturas/admin-usuarios.png" alt="Gestión de usuarios, roles y acciones de edición y eliminación" width="1000">
+
+### Variables de configuración
 
 | Variable | Para qué sirve | Valor por defecto |
 |---|---|---|
-| `JWT_SECRET` | Clave de firma de los tokens (mínimo 32 caracteres) | Clave de desarrollo |
+| `JWT_SECRET` | Clave de firma de los tokens (mínimo 32 caracteres) | Ninguno fuera de `dev`; clave local en `dev` |
+| `DB_PASSWORD` | Contraseña de PostgreSQL | Ninguno fuera de `dev`; `123456` en `dev` |
+
+`JWT_SECRET` es obligatoria fuera del perfil `dev`. La aplicación no inicia si tiene menos de 32 caracteres.
 
 ## Datos de prueba
 
@@ -145,14 +162,25 @@ La ruta `/admin` redirige a `/admin/reservas`. Las rutas de administración est�
 
 Las capacidades son datos de ejemplo, ya que el documento de requerimientos no las define.
 
-**Usuarios del portal de administración**
+**Cuentas de prueba**
 
 | Correo | Contraseña | Rol |
 |---|---|---|
 | admin@coppel.test | Admin123! | ADMIN |
 | jefe@coppel.test | Jefe123! | JEFE_DEPARTAMENTO |
+| empleado1@coppel.test | Empleado123! | EMPLEADO (Sistemas) |
+| empleado2@coppel.test | Empleado123! | EMPLEADO (Finanzas) |
 
 Las contraseñas se almacenan cifradas con bcrypt.
+Las cuentas faltantes se siembran al iniciar el backend, sin sobrescribir cuentas existentes. No existe registro público: solo `ADMIN` puede consultar, crear, editar o eliminar cuentas desde la pestaña **Usuarios**. No se puede eliminar la cuenta con la que se inició sesión; las reservas y el historial de una cuenta eliminada se conservan desvinculados del usuario.
+
+### Roles y permisos
+
+| Rol | Permisos |
+|---|---|
+| `EMPLEADO` | Iniciar sesión, reservar espacios y consultar/listar únicamente sus propias reservas. |
+| `JEFE_DEPARTAMENTO` | Consultar cualquier reserva y listar, aprobar, rechazar o modificar reservas; no puede cancelar ni administrar usuarios. |
+| `ADMIN` | Todas las operaciones de reservas, incluida la cancelación, y consultar, crear, editar o eliminar cuentas de usuario. |
 
 ## API REST
 
@@ -160,8 +188,9 @@ Las contraseñas se almacenan cifradas con bcrypt.
 
 | Método | Ruta | Acceso | Descripción |
 |---|---|---|---|
-| POST | `/api/reservas` | Público | Crea una solicitud de reserva y devuelve su folio |
-| GET | `/api/reservas/{folio}` | Público | Consulta una reserva y su historial de cambios |
+| POST | `/api/reservas` | Cualquier usuario autenticado | Crea una solicitud a nombre del usuario |
+| GET | `/api/reservas/{folio}` | Autenticado; empleados solo ven las propias | Consulta una reserva y su historial |
+| GET | `/api/reservas/mias` | Cualquier usuario autenticado | Lista las reservas del usuario actual |
 | POST | `/api/auth/login` | Público | Inicia sesión y devuelve un JWT |
 | GET | `/api/espacios` | Público | Lista los espacios y su capacidad |
 | GET | `/api/espacios/{id}/disponibilidad?fecha=YYYY-MM-DD` | Público | Horarios ocupados de un espacio en una fecha |
@@ -170,8 +199,12 @@ Las contraseñas se almacenan cifradas con bcrypt.
 | PUT | `/api/admin/reservas/{folio}/estado` | ADMIN, JEFE_DEPARTAMENTO | Aprueba o rechaza una reserva pendiente |
 | PUT | `/api/admin/reservas/{folio}` | ADMIN, JEFE_DEPARTAMENTO | Modifica espacio, fecha y horario |
 | DELETE | `/api/admin/reservas/{folio}` | Solo ADMIN | Cancela una reserva |
+| GET | `/api/admin/usuarios` | Solo ADMIN | Lista usuarios sin exponer contraseñas ni hashes |
+| POST | `/api/admin/usuarios` | Solo ADMIN | Crea una cuenta y guarda su contraseña cifrada |
+| PUT | `/api/admin/usuarios/{id}` | Solo ADMIN | Edita nombre, correo, departamento y rol; no cambia la contraseña |
+| DELETE | `/api/admin/usuarios/{id}` | Solo ADMIN | Elimina la cuenta; conserva las reservas e historial |
 
-Todas las rutas `/api/admin/**` requieren el encabezado `Authorization: Bearer <token>`.
+Las rutas `/api/admin/**` requieren `Authorization: Bearer <token>` y rol `ADMIN` o `JEFE_DEPARTAMENTO`. `/api/admin/usuarios/**` exige además rol `ADMIN`.
 
 ### Ejemplo: crear una reserva
 
@@ -183,17 +216,15 @@ Todas las rutas `/api/admin/**` requieren el encabezado `Authorization: Bearer <
   "fecha": "2026-11-20",
   "horaInicio": "10:00",
   "horaFin": "11:00",
-  "solicitante": "Nombre Apellido",
-  "departamento": "Sistemas",
   "descripcion": "Reunión de planeación"
 }
 ```
 
-Respuesta **201 Created** (resumida):
+El nombre y departamento del solicitante se toman del perfil autenticado; los campos antiguos `solicitante` y `departamento` se siguen aceptando por compatibilidad, pero se ignoran. Respuesta **201 Created** (resumida):
 
 ```json
 {
-  "folio": "2026000001",
+  "folio": "202600000192",
   "espacio": "Sala de reuniones pequeña",
   "estado": "PENDIENTE",
   "duracionMinutos": 60,
@@ -232,47 +263,71 @@ Todos los errores usan el mismo formato y el código HTTP correspondiente:
 | 400 | Datos inválidos, formato de fecha u hora incorrecto, o regla de negocio incumplida |
 | 401 | Credenciales incorrectas o token ausente o inválido |
 | 403 | El usuario no tiene permisos para la operación |
-| 404 | No existe el folio o el espacio |
-| 409 | El espacio ya está reservado en ese horario |
+| 404 | No existe el folio o el espacio; también se rechaza un dígito de verificación inválido |
+| 409 | Horario ocupado o estado que no permite la operación |
+| 429 | Se excedió el límite de solicitudes por IP |
 
 ## Reglas de negocio
 
 - Toda reserva nace en estado **PENDIENTE**.
-- El folio es numérico e irrepetible: año de la reserva más el id con seis dígitos (por ejemplo `2026000123`).
+- Los folios nuevos son numéricos: año + id con seis dígitos + verificación de dos dígitos (por ejemplo `202600000192`). Los folios históricos de diez dígitos se siguen aceptando.
 - **No se permiten solapamientos**: no puede haber dos reservas en el mismo espacio, fecha y horario traslapado. Una reserva que empieza justo cuando termina otra sí es válida.
 - Solo las reservas **pendientes y aprobadas** bloquean el espacio; las rechazadas y canceladas lo liberan.
 - Horario permitido: de **08:00 a 20:00**, con duración mínima de **30 minutos**.
 - No se puede reservar en una fecha y hora que ya pasó.
-- Cada cambio queda registrado en el **historial** con la fecha y el usuario que lo realizó (sin usuario cuando lo origina el solicitante).
+- Cada cambio queda registrado en el **historial** con la fecha y el usuario que lo realizó.
 
 ## Seguridad
 
 - Autenticación con **JWT** firmado (HS256) y vigencia de 2 horas.
+- Clave JWT obligatoria fuera del perfil `dev`, con mínimo de 32 caracteres.
 - Contraseñas cifradas con **bcrypt**.
-- Rutas del empleado públicas; rutas de administración restringidas a los roles `ADMIN` y `JEFE_DEPARTAMENTO`.
-- CORS habilitado para el frontend en `http://localhost:4200`.
+- El inicio de sesión es único para todos los roles. Reservar y consultar requieren autenticación; un empleado solo puede ver sus reservas. `ADMIN` y `JEFE_DEPARTAMENTO` pueden consultar cualquier folio y gestionar reservas.
+- No hay registro público. El acceso a `/api/admin/usuarios` está restringido a `ADMIN`.
+- CORS limitado a los orígenes configurados en `app.cors.allowed-origins` y a los encabezados `Authorization`, `Content-Type` y `Accept`.
+- Rate limit en memoria por IP: 5 intentos por minuto para el login, 10 para crear reservas y 120 para el resto de la API. Se puede desactivar en pruebas con `app.ratelimit.enabled=false`.
+- Swagger y Actuator están desactivados por defecto; Swagger y el health check de Actuator se habilitan solo con `dev`. Las rutas de Actuator requieren autenticación.
 
 ## Decisiones y supuestos
 
-- Los empleados no tienen cuenta: se identifican en la solicitud con su nombre y departamento. Solo el personal administrativo inicia sesión.
+- Las cuentas se crean o editan únicamente desde el panel de usuarios con una sesión `ADMIN`.
+- La pantalla `/admin/login` se conserva como redirección compatible hacia `/login`.
 - La duración de una reserva no se guarda: se calcula a partir de la hora de inicio y fin para evitar datos contradictorios.
 - Las reservas **canceladas** no se borran: se conservan con su historial.
 - Las capacidades, el horario de atención y la duración mínima son supuestos propios y se ajustan fácilmente en el código.
 
-## Pruebas manuales realizadas
+## Pruebas
 
-Se probaron con Postman los siguientes casos del portal del empleado y del login:
+Ejecuta cada comando desde la carpeta indicada. El backend usa el perfil `test` durante las pruebas y desactiva el rate limit; la base de datos PostgreSQL debe estar disponible.
 
-- Creación de reservas válidas en distintos espacios.
-- Rechazo por horarios solapados (409), con los casos límite incluidos.
-- Validaciones de campos obligatorios, formato de fecha y hora, fecha pasada, horario fuera de rango (400).
-- Espacio inexistente (404) y folio inexistente (404).
-- Login correcto, credenciales incorrectas y datos inválidos.
-- Acceso a rutas de administración sin token, con token válido y con token alterado.
+**Backend** (desde `backend`):
 
-El frontend cuenta con pruebas unitarias para servicios HTTP, autenticación, guardas y reglas de reserva.
+```powershell
+.\mvnw.cmd test
+```
 
-## Consideraciones para producción
+**Frontend: compilación y pruebas unitarias** (desde `frontend`):
 
-- Configura `DB_PASSWORD` y `JWT_SECRET` con valores seguros en el entorno de despliegue; los valores predeterminados son solo para desarrollo.
-- Sustituye las credenciales de prueba antes de publicar la aplicación.
+```bash
+npm run build
+npm test -- --watch=false
+```
+
+Las pruebas unitarias usan Chrome Headless. Si Chrome no está en la ruta predeterminada, define `CHROME_BIN` con la ruta de Chrome o Edge antes de ejecutar `npm test`.
+
+**Pruebas E2E** (desde `frontend`):
+
+```bash
+npx playwright install chromium
+npm run test:e2e
+```
+
+Las E2E recorren el formulario de reserva y la gestión de usuarios (alta, edición y eliminación), validan la navegación de sesión y los permisos por rol. Simulan la API, por lo que no requieren el backend ni la base de datos.
+
+## Pendiente antes de producción
+
+- Publicar únicamente detrás de **HTTPS**.
+- Añadir bloqueo progresivo o temporal de cuentas tras intentos fallidos de inicio de sesión.
+- Definir un proceso de **rotación de claves JWT** y mantener las claves fuera del repositorio.
+- Revisar el almacenamiento del token en el frontend y evaluar opciones más seguras que `localStorage` según la arquitectura de despliegue.
+- Sustituir las credenciales de prueba y no habilitar el perfil `dev` en producción.

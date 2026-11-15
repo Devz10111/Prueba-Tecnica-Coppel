@@ -25,9 +25,12 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
+import java.util.zip.CRC32;
 
 /** Lógica de negocio de las reservas: validaciones, folio, historial y gestión del administrador. */
 @Service
@@ -38,6 +41,7 @@ public class ReservaService {
     public static final LocalTime HORA_APERTURA = LocalTime.of(8, 0);
     public static final LocalTime HORA_CIERRE = LocalTime.of(20, 0);
     private static final long DURACION_MINIMA_MINUTOS = 30;
+    private static final String SAL_FOLIO = "coppel-reservas-folio-v1";
 
     // Solo las reservas en estos estados ocupan el espacio
     private static final List<EstadoReserva> ESTADOS_QUE_BLOQUEAN =
@@ -54,8 +58,11 @@ public class ReservaService {
 
     /** CU1: registra una nueva solicitud y devuelve la reserva con su folio. */
     @Transactional
-    public ReservaResponse crear(ReservaRequest req) {
+    public ReservaResponse crear(ReservaRequest req, String emailUsuario) {
 
+        Usuario usuario = usuarioRepository.findByEmail(emailUsuario)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "No se encontró al usuario autenticado"));
         Espacio espacio = buscarEspacio(req.espacioId());
 
         validarHorario(req.fecha(), req.horaInicio(), req.horaFin());
@@ -73,8 +80,10 @@ public class ReservaService {
         reserva.setFecha(req.fecha());
         reserva.setHoraInicio(req.horaInicio());
         reserva.setHoraFin(req.horaFin());
-        reserva.setSolicitante(req.solicitante());
-        reserva.setDepartamento(req.departamento());
+        reserva.setUsuario(usuario);
+        reserva.setSolicitante(usuario.getNombre());
+        reserva.setDepartamento(usuario.getDepartamento() == null || usuario.getDepartamento().isBlank()
+                ? "Administración" : usuario.getDepartamento());
         reserva.setDescripcion(req.descripcion());
         // El estado nace PENDIENTE (valor por defecto de la entidad)
 
@@ -85,7 +94,7 @@ public class ReservaService {
         reserva.setFolio(generarFolio(reserva));
 
         historialRepository.save(new HistorialCambio(
-                reserva, null, "CREADA", "Solicitud creada por " + req.solicitante()));
+                reserva, usuario, "CREADA", "Solicitud creada por " + usuario.getNombre()));
 
         return armarRespuesta(reserva);
     }
@@ -94,6 +103,27 @@ public class ReservaService {
     @Transactional(readOnly = true)
     public ReservaResponse consultarPorFolio(String folio) {
         return armarRespuesta(buscarPorFolio(folio));
+    }
+
+    @Transactional(readOnly = true)
+    public ReservaResponse consultarPorFolio(String folio, String emailUsuario, boolean puedeConsultarTodas) {
+        Reserva reserva = buscarPorFolio(folio);
+        if (!puedeConsultarTodas
+                && (reserva.getUsuario() == null
+                || !reserva.getUsuario().getEmail().equalsIgnoreCase(emailUsuario))) {
+            throw new RecursoNoEncontradoException("No existe una reserva con el folio " + folio);
+        }
+        return armarRespuesta(reserva);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ReservaResumenResponse> listarMias(String emailUsuario) {
+        Usuario usuario = usuarioRepository.findByEmail(emailUsuario)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "No se encontró al usuario autenticado"));
+        return reservaRepository.listarPorUsuarioId(usuario.getId()).stream()
+                .map(ReservaResumenResponse::desde)
+                .toList();
     }
 
     // =====================================================================
@@ -212,6 +242,9 @@ public class ReservaService {
     // =====================================================================
 
     private Reserva buscarPorFolio(String folio) {
+        if (folio != null && folio.length() == 12 && !esChecksumValido(folio)) {
+            throw new RecursoNoEncontradoException("No existe una reserva con el folio " + folio);
+        }
         return reservaRepository.findByFolio(folio)
                 .orElseThrow(() -> new RecursoNoEncontradoException(
                         "No existe una reserva con el folio " + folio));
@@ -245,9 +278,21 @@ public class ReservaService {
         }
     }
 
-    // Folio numérico: año + id con 6 dígitos. Ejemplo: 2026000123
+    // Los folios nuevos agregan dos dígitos de verificación; los folios históricos se conservan.
     private String generarFolio(Reserva reserva) {
-        return String.format("%d%06d", reserva.getFecha().getYear(), reserva.getId());
+        String id = String.format(Locale.ROOT, "%06d", reserva.getId());
+        return String.format(Locale.ROOT, "%04d%s%s", reserva.getFecha().getYear(), id, checksum(id));
+    }
+
+    private boolean esChecksumValido(String folio) {
+        String id = folio.substring(4, 10);
+        return checksum(id).equals(folio.substring(10));
+    }
+
+    private String checksum(String id) {
+        CRC32 crc = new CRC32();
+        crc.update((id + ":" + SAL_FOLIO).getBytes(StandardCharsets.UTF_8));
+        return String.format(Locale.ROOT, "%02d", crc.getValue() % 100);
     }
 
     private ReservaResponse armarRespuesta(Reserva reserva) {

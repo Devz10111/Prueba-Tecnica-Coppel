@@ -31,11 +31,9 @@ public record ReservaRequest(
         LocalTime horaFin,
 
         // Datos del solicitante (PASO 3)
-        @NotBlank(message = "El nombre del solicitante es obligatorio")
         @Size(max = 120, message = "El nombre no puede exceder 120 caracteres")
         String solicitante,
 
-        @NotBlank(message = "El departamento es obligatorio")
         @Size(max = 120, message = "El departamento no puede exceder 120 caracteres")
         String departamento,
 

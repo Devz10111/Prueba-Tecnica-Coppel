@@ -8,5 +8,7 @@ public record LoginResponse(
         String tipo,        // Siempre "Bearer"
         Instant expiraEn,
         String nombre,
-        String rol
+        String rol,
+        String email,
+        String departamento
 ) { }

@@ -2,7 +2,7 @@
 <div class="d-flex flex-column min-vh-100">
 
   <!-- ================= BARRA DE NAVEGACIÓN ================= -->
-  <nav class="navbar navbar-expand-lg navbar-dark navbar-coppel shadow-sm">
+  <nav class="navbar navbar-expand-xxl navbar-dark navbar-coppel shadow-sm">
     <div class="container">
 
       <!-- Marca: siempre lleva al inicio. -->
@@ -41,7 +41,7 @@
         class="collapse navbar-collapse"
         [class.show]="menuAbierto()"
       >
-        <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
+        <ul class="navbar-nav ms-auto mb-2 mb-xxl-0 align-items-xxl-center">
           <li class="nav-item">
             <a
               class="nav-link"
@@ -50,6 +50,17 @@
               (click)="cerrarMenu()"
             >
               <i class="bi bi-calendar-plus me-1"></i>Nueva reserva
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a
+              class="nav-link"
+              routerLink="/mis-reservas"
+              routerLinkActive="active"
+              (click)="cerrarMenu()"
+            >
+              <i class="bi bi-card-list me-1"></i>Mis reservas
             </a>
           </li>
 
@@ -77,23 +88,25 @@
 
           <!-- Portal de administración: cambia según haya sesión o no. -->
           @if (usuario(); as sesion) {
-            <li class="nav-item ms-lg-3">
+            @if (puedeAdministrar()) {
+            <li class="nav-item ms-xxl-3">
               <a
                 class="nav-link"
                 routerLink="/admin/reservas"
                 routerLinkActive="active"
                 (click)="cerrarMenu()"
               >
-                <i class="bi bi-speedometer2 me-1"></i>Panel
+                <i class="bi bi-speedometer2 me-1"></i>Panel de administración
               </a>
             </li>
+            }
 
             <!-- Nombre, rol y cierre de sesión del usuario autenticado. -->
             <li
-              class="nav-item ms-lg-3 d-flex flex-column flex-lg-row align-items-lg-center gap-2 py-2 py-lg-0"
+              class="nav-item ms-xxl-3 d-flex flex-column flex-xxl-row align-items-xxl-center gap-2 py-2 py-xxl-0"
             >
-              <span class="navbar-text text-lg-end lh-sm">
-                <span class="d-block fw-semibold">{{ sesion.nombre }}</span>
+              <span class="navbar-text text-xxl-end lh-sm">
+                <span class="d-block fw-semibold">Hola, {{ sesion.nombre }}</span>
                 <span class="badge text-bg-light text-primary">
                   {{ rolTexto(sesion.rol) }}
                 </span>
@@ -107,14 +120,14 @@
               </button>
             </li>
           } @else {
-            <li class="nav-item ms-lg-3">
+            <li class="nav-item ms-xxl-3">
               <a
                 class="nav-link"
-                routerLink="/admin/login"
+                routerLink="/login"
                 routerLinkActive="active"
                 (click)="cerrarMenu()"
               >
-                <i class="bi bi-shield-lock me-1"></i>Acceso administrador
+                <i class="bi bi-box-arrow-in-right me-1"></i>Iniciar sesión
               </a>
             </li>
           }
@@ -126,6 +139,12 @@
   <!-- ================= CONTENIDO DE CADA RUTA ================= -->
   <main class="flex-grow-1">
     <div class="container py-4 py-md-5 contenido-ruta">
+      @if (aviso(); as mensaje) {
+        <div class="alert alert-warning alert-dismissible fade show" role="status">
+          {{ mensaje }}
+          <button type="button" class="btn-close" aria-label="Cerrar aviso" (click)="cerrarAviso()"></button>
+        </div>
+      }
       <!-- Aquí Angular carga la pantalla que corresponde a la URL actual. -->
       <router-outlet />
     </div>

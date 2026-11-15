@@ -41,6 +41,7 @@ export class Layout {
    * navbar cambia solo al iniciar o cerrar sesión.
    */
   protected readonly usuario = this.auth.usuarioActual;
+  protected readonly aviso = this.auth.avisoActual;
 
   /** Año actual mostrado en el pie de página. */
   protected readonly anioActual = new Date().getFullYear();
@@ -62,11 +63,26 @@ export class Layout {
   protected cerrarSesion(): void {
     this.cerrarMenu();
     this.auth.logout();
-    void this.router.navigate(['/admin/login']);
+    this.auth.limpiarAviso();
+    void this.router.navigate(['/login']);
+  }
+
+  protected cerrarAviso(): void {
+    this.auth.limpiarAviso();
+  }
+
+  protected puedeAdministrar(): boolean {
+    const rol = this.usuario()?.rol;
+    return rol === 'ADMIN' || rol === 'JEFE_DEPARTAMENTO';
   }
 
   /** Texto legible del rol para mostrarlo en la barra. */
   protected rolTexto(rol: RolUsuario): string {
-    return rol === 'ADMIN' ? 'Administrador' : 'Jefe de departamento';
+    const etiquetas: Record<RolUsuario, string> = {
+      ADMIN: 'Administrador',
+      JEFE_DEPARTAMENTO: 'Jefe de departamento',
+      EMPLEADO: 'Empleado',
+    };
+    return etiquetas[rol];
   }
 }

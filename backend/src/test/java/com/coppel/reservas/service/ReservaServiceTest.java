@@ -18,6 +18,7 @@ import com.coppel.reservas.repository.HistorialCambioRepository;
 import com.coppel.reservas.repository.ReservaRepository;
 import com.coppel.reservas.repository.UsuarioRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -35,6 +36,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -58,6 +60,14 @@ class ReservaServiceTest {
     private final LocalDate fecha = LocalDate.now().plusDays(3);
     private final LocalTime inicio = LocalTime.of(10, 0);
     private final LocalTime fin = LocalTime.of(11, 0);
+    private static final String EMAIL_EMPLEADO = "empleado@coppel.test";
+
+    @BeforeEach
+    void prepararEmpleado() {
+        Usuario empleado = new Usuario("Jose Vargas", EMAIL_EMPLEADO, "Sistemas", "hash", Rol.EMPLEADO);
+        empleado.setId(11L);
+        lenient().when(usuarioRepository.findByEmail(EMAIL_EMPLEADO)).thenReturn(Optional.of(empleado));
+    }
 
     // ---------- Métodos de apoyo para armar datos de prueba ----------
 
@@ -108,16 +118,40 @@ class ReservaServiceTest {
         });
         when(historialRepository.findByReservaIdOrderByFechaAsc(7L)).thenReturn(List.of());
 
-        ReservaResponse respuesta = service.crear(solicitud(inicio, fin));
+        ReservaResponse respuesta = service.crear(solicitud(inicio, fin), EMAIL_EMPLEADO);
 
-        // Folio = año de la reserva + id con 6 dígitos
-        assertThat(respuesta.folio()).isEqualTo(String.format("%d%06d", fecha.getYear(), 7));
+        // Folio nuevo = año + id con 6 dígitos + verificación de 2 dígitos.
+        assertThat(respuesta.folio()).matches(String.format("%04d000007\\d{2}", fecha.getYear()));
         assertThat(respuesta.estado()).isEqualTo(EstadoReserva.PENDIENTE);
+        assertThat(respuesta.solicitante()).isEqualTo("Jose Vargas");
+        assertThat(respuesta.departamento()).isEqualTo("Sistemas");
 
         // Debe quedar registrada la acción CREADA en el historial
         ArgumentCaptor<HistorialCambio> captor = ArgumentCaptor.forClass(HistorialCambio.class);
         verify(historialRepository).save(captor.capture());
         assertThat(captor.getValue().getAccion()).isEqualTo("CREADA");
+        assertThat(captor.getValue().getUsuario().getEmail()).isEqualTo(EMAIL_EMPLEADO);
+    }
+
+    @Test
+    void consultar_conChecksumNuevoInvalido_lanzaNoEncontradoAntesDeConsultarRepositorio() {
+        String folioInvalido = String.format("%04d00000700", fecha.getYear());
+
+        assertThatThrownBy(() -> service.consultarPorFolio(folioInvalido))
+                .isInstanceOf(RecursoNoEncontradoException.class);
+
+        verify(reservaRepository, never()).findByFolio(any(String.class));
+    }
+
+    @Test
+    void consultar_conFolioHistoricoSiguePermitido() {
+        when(reservaRepository.findByFolio("2026000007"))
+                .thenReturn(Optional.of(reserva(EstadoReserva.PENDIENTE)));
+        when(historialRepository.findByReservaIdOrderByFechaAsc(7L)).thenReturn(List.of());
+
+        ReservaResponse respuesta = service.consultarPorFolio("2026000007");
+
+        assertThat(respuesta.folio()).isEqualTo("2026000007");
     }
 
     @Test
@@ -126,7 +160,7 @@ class ReservaServiceTest {
         when(reservaRepository.existeSolapamiento(anyLong(), any(LocalDate.class),
                 any(LocalTime.class), any(LocalTime.class), anyCollection(), anyLong())).thenReturn(true);
 
-        assertThatThrownBy(() -> service.crear(solicitud(inicio, fin)))
+        assertThatThrownBy(() -> service.crear(solicitud(inicio, fin), EMAIL_EMPLEADO))
                 .isInstanceOf(ConflictoException.class)
                 .hasMessageContaining("ya está reservado");
 
@@ -139,7 +173,7 @@ class ReservaServiceTest {
         ReservaRequest peticion = new ReservaRequest(99L, fecha, inicio, fin,
                 "Jose Vargas", "Sistemas", "Prueba de reserva");
 
-        assertThatThrownBy(() -> service.crear(peticion))
+        assertThatThrownBy(() -> service.crear(peticion, EMAIL_EMPLEADO))
                 .isInstanceOf(RecursoNoEncontradoException.class)
                 .hasMessageContaining("99");
     }
@@ -148,7 +182,7 @@ class ReservaServiceTest {
     void crear_conHoraFinAnteriorAInicio_lanzaReglaNegocio() {
         when(espacioRepository.findById(1L)).thenReturn(Optional.of(espacio()));
 
-        assertThatThrownBy(() -> service.crear(solicitud(LocalTime.of(12, 0), LocalTime.of(11, 0))))
+        assertThatThrownBy(() -> service.crear(solicitud(LocalTime.of(12, 0), LocalTime.of(11, 0)), EMAIL_EMPLEADO))
                 .isInstanceOf(ReglaNegocioException.class)
                 .hasMessageContaining("posterior");
     }
@@ -157,7 +191,7 @@ class ReservaServiceTest {
     void crear_fueraDelHorarioDeAtencion_lanzaReglaNegocio() {
         when(espacioRepository.findById(1L)).thenReturn(Optional.of(espacio()));
 
-        assertThatThrownBy(() -> service.crear(solicitud(LocalTime.of(6, 0), LocalTime.of(7, 0))))
+        assertThatThrownBy(() -> service.crear(solicitud(LocalTime.of(6, 0), LocalTime.of(7, 0)), EMAIL_EMPLEADO))
                 .isInstanceOf(ReglaNegocioException.class)
                 .hasMessageContaining("solo se permiten entre");
     }
@@ -166,7 +200,7 @@ class ReservaServiceTest {
     void crear_conDuracionMenorAlMinimo_lanzaReglaNegocio() {
         when(espacioRepository.findById(1L)).thenReturn(Optional.of(espacio()));
 
-        assertThatThrownBy(() -> service.crear(solicitud(LocalTime.of(10, 0), LocalTime.of(10, 15))))
+        assertThatThrownBy(() -> service.crear(solicitud(LocalTime.of(10, 0), LocalTime.of(10, 15)), EMAIL_EMPLEADO))
                 .isInstanceOf(ReglaNegocioException.class)
                 .hasMessageContaining("duración mínima");
     }

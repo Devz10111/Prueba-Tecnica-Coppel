@@ -16,6 +16,7 @@ import {
   ReservaRequest,
   ReservaResponse,
 } from '../../core/models';
+import { AuthService } from '../../core/services/auth.service';
 import { EspacioService } from '../../core/services/espacio.service';
 import { ReservaService } from '../../core/services/reserva.service';
 import { obtenerMensajeError } from '../../core/utils/error.utils';
@@ -56,6 +57,7 @@ export class Reserva implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly espacioService = inject(EspacioService);
   private readonly reservaService = inject(ReservaService);
+  private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -88,6 +90,7 @@ export class Reserva implements OnInit {
   protected readonly enviando = signal(false);
   protected readonly errorEnvio = signal<string | null>(null);
   protected readonly reservaCreada = signal<ReservaResponse | null>(null);
+  protected readonly usuario = this.auth.usuarioActual;
 
   protected readonly horaApertura = '08:00';
   protected readonly horaCierre = '20:00';
@@ -104,16 +107,6 @@ export class Reserva implements OnInit {
     fecha: this.fb.control('', [Validators.required, fechaNoPasada]),
     horaInicio: this.fb.control('', Validators.required),
     horaFin: this.fb.control('', Validators.required),
-    solicitante: this.fb.control('', [
-      Validators.required,
-      Validators.maxLength(120),
-      textoNoVacio,
-    ]),
-    departamento: this.fb.control('', [
-      Validators.required,
-      Validators.maxLength(120),
-      textoNoVacio,
-    ]),
     descripcion: this.fb.control('', [
       Validators.required,
       Validators.maxLength(500),
@@ -315,8 +308,7 @@ export class Reserva implements OnInit {
   }
 
   protected paso3Valido(): boolean {
-    const { solicitante, departamento, descripcion } = this.form.controls;
-    return solicitante.valid && departamento.valid && descripcion.valid;
+    return this.form.controls.descripcion.valid;
   }
 
   /** Habilita o deshabilita el botón Siguiente según el paso actual. */
@@ -396,15 +388,8 @@ export class Reserva implements OnInit {
     }
 
     const valores = this.form.getRawValue();
-    if (
-      valores.espacioId === null ||
-      !valores.fecha ||
-      !valores.horaInicio ||
-      !valores.horaFin ||
-      !valores.solicitante ||
-      !valores.departamento ||
-      !valores.descripcion
-    ) {
+    if (valores.espacioId === null || !valores.fecha || !valores.horaInicio
+      || !valores.horaFin || !valores.descripcion) {
       return;
     }
 
@@ -413,8 +398,6 @@ export class Reserva implements OnInit {
       fecha: valores.fecha,
       horaInicio: valores.horaInicio.slice(0, 5),
       horaFin: valores.horaFin.slice(0, 5),
-      solicitante: valores.solicitante.trim(),
-      departamento: valores.departamento.trim(),
       descripcion: valores.descripcion.trim(),
     };
 
@@ -448,8 +431,6 @@ export class Reserva implements OnInit {
       fecha: '',
       horaInicio: '',
       horaFin: '',
-      solicitante: '',
-      departamento: '',
       descripcion: '',
     });
 
@@ -522,23 +503,6 @@ export class Reserva implements OnInit {
     }
 
     return mensajes;
-  }
-
-  /** Mensajes de validación de los campos del paso 3. */
-  protected errorSolicitante(): string | null {
-    return this.mensajeError(
-      this.form.controls.solicitante,
-      'El nombre del solicitante',
-      120,
-    );
-  }
-
-  protected errorDepartamento(): string | null {
-    return this.mensajeError(
-      this.form.controls.departamento,
-      'El departamento',
-      120,
-    );
   }
 
   protected errorDescripcion(): string | null {

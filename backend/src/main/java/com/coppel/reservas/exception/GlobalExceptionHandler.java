@@ -6,6 +6,8 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,6 +15,8 @@ import java.util.List;
 /** Captura las excepciones de toda la aplicación y las convierte en respuestas JSON claras. */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(RecursoNoEncontradoException.class)
     public ResponseEntity<ApiError> noEncontrado(RecursoNoEncontradoException ex) {
@@ -49,6 +53,13 @@ public class GlobalExceptionHandler {
         return construir(HttpStatus.BAD_REQUEST,
                 "El cuerpo de la solicitud no es válido. Revisa el formato de fechas (2026-11-20) y horas (09:00).",
                 List.of());
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiError> errorInterno(Exception ex) {
+        LOGGER.error("Error interno no controlado al procesar la solicitud", ex);
+        return construir(HttpStatus.INTERNAL_SERVER_ERROR,
+                "Ocurrió un error interno. Inténtalo de nuevo más tarde.", List.of());
     }
 
     private ResponseEntity<ApiError> construir(HttpStatus status, String mensaje, List<String> detalles) {

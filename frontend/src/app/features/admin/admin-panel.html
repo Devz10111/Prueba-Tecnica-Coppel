@@ -1,0 +1,22 @@
+<nav class="nav nav-tabs mb-4" aria-label="Secciones de administración">
+  <a
+    class="nav-link"
+    routerLink="/admin/reservas"
+    routerLinkActive="active"
+    [routerLinkActiveOptions]="{ exact: true }"
+  >
+    <i class="bi bi-calendar-check me-1" aria-hidden="true"></i>Reservas
+  </a>
+  @if (puedeAdministrarUsuarios()) {
+    <a
+      class="nav-link"
+      routerLink="/admin/usuarios"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+    >
+      <i class="bi bi-people me-1" aria-hidden="true"></i>Usuarios
+    </a>
+  }
+</nav>
+
+<router-outlet />

@@ -38,6 +38,10 @@ public class Reserva {
     @JoinColumn(name = "espacio_id")
     private Espacio espacio;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id")
+    private Usuario usuario;
+
     // Día de la reserva (LocalDate guarda solo la fecha, sin hora)
     @Column(nullable = false)
     private LocalDate fecha;

@@ -3,6 +3,8 @@
 .navbar-brand {
   letter-spacing: 0.02em;
   color: #fff;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .logo-coppel {
@@ -12,7 +14,7 @@
   object-fit: contain;
 }
 
-@media (min-width: 992px) {
+@media (min-width: 1600px) {
   .logo-coppel {
     width: 140px;
     height: 78px;
@@ -29,6 +31,63 @@
 .navbar .nav-link {
   color: rgba(255, 255, 255, 0.82);
   transition: color 0.15s ease;
+  white-space: nowrap;
+}
+
+.navbar-coppel .navbar-text {
+  white-space: nowrap;
+}
+
+@media (min-width: 1400px) and (max-width: 1599.98px) {
+  .navbar-expand-xxl {
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .navbar-expand-xxl .navbar-toggler {
+    display: block;
+  }
+
+  .navbar-expand-xxl .navbar-collapse {
+    display: none !important;
+    flex-basis: 100%;
+  }
+
+  .navbar-expand-xxl .navbar-collapse.show {
+    display: flex !important;
+  }
+
+  .navbar-expand-xxl .navbar-nav {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+  }
+
+  .navbar-expand-xxl .navbar-nav .nav-item {
+    margin-left: 0 !important;
+  }
+}
+
+@media (min-width: 1600px) {
+  .navbar-coppel > .container {
+    width: 100%;
+    max-width: none;
+    padding-right: 2rem;
+    padding-left: 2rem;
+  }
+
+  .navbar-coppel .navbar-nav {
+    flex-wrap: nowrap;
+  }
+
+  .navbar-coppel .navbar-nav > .nav-item {
+    flex-shrink: 0;
+  }
+
+  .navbar-coppel .navbar-nav .btn {
+    white-space: nowrap;
+  }
 }
 
 .navbar-coppel .nav-link:hover,

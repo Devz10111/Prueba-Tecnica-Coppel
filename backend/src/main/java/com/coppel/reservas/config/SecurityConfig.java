@@ -1,5 +1,8 @@
 package com.coppel.reservas.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -7,11 +10,13 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -23,12 +28,33 @@ import java.util.List;
 @Configuration  // Clase de configuración: Spring lee los @Bean que define
 public class SecurityConfig {
 
+    @Value("${app.cors.allowed-origins:http://localhost:4200}")
+    private String allowedOrigins;
+
+    @Bean
+    public RateLimitFilter rateLimitFilter(
+            @Value("${app.ratelimit.enabled:true}") boolean enabled,
+            @Value("${app.ratelimit.login.max-requests:5}") int loginLimit,
+            @Value("${app.ratelimit.reservas.max-requests:10}") int reservasLimit,
+            @Value("${app.ratelimit.api.max-requests:120}") int apiLimit,
+            @Value("${app.ratelimit.window-seconds:60}") long windowSeconds) {
+        return new RateLimitFilter(
+                enabled, loginLimit, reservasLimit, apiLimit, windowSeconds, new ObjectMapper());
+    }
+
+    @Bean
+    public FilterRegistrationBean<RateLimitFilter> rateLimitFilterServletRegistration(RateLimitFilter filter) {
+        FilterRegistrationBean<RateLimitFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
     /**
      * Cadena de filtros de seguridad: el conjunto de reglas por las que pasa
      * cada petición HTTP antes de llegar al controlador.
      */
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, RateLimitFilter rateLimitFilter) throws Exception {
         http
             // CSRF protege formularios que usan cookies de sesión.
             // Esta API no usa cookies (usa tokens JWT), así que se desactiva.
@@ -49,18 +75,21 @@ public class SecurityConfig {
                 // Si estuviera bloqueada, un error se vería como un 403 vacío.
                 .requestMatchers("/error").permitAll()
 
-                // Login: debe ser público, porque aún no se tiene token para entrar.
-                .requestMatchers("/api/auth/**").permitAll()
+                // Solo el inicio de sesión es público; las cuentas las administra ADMIN.
+                .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
 
                 // Documentación Swagger (interfaz web y definición de la API).
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 
                 // --- Portal del empleado: no requiere iniciar sesión ---
-                .requestMatchers(HttpMethod.POST, "/api/reservas").permitAll()      // crear reserva
-                .requestMatchers(HttpMethod.GET, "/api/reservas/**").permitAll()    // consultar por folio
+                .requestMatchers(HttpMethod.POST, "/api/reservas").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/reservas/**").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/espacios/**").permitAll()    // espacios y disponibilidad
 
                 // --- Portal de administración ---
+                // La administración de cuentas queda reservada al rol ADMIN.
+                .requestMatchers("/api/admin/usuarios/**").hasRole("ADMIN")
+
                 // Cancelar reservas (DELETE): solo ADMIN.
                 // Va ANTES de la regla general de /api/admin/** para que tenga prioridad;
                 // si fuera después, el jefe de departamento también podría cancelar.
@@ -82,6 +111,7 @@ public class SecurityConfig {
             .oauth2ResourceServer(oauth2 -> oauth2
                 .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
 
+        http.addFilterBefore(rateLimitFilter, BearerTokenAuthenticationFilter.class);
         return http.build();
     }
 
@@ -109,9 +139,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:4200"));                       // quién puede llamar
+        config.setAllowedOrigins(Arrays.stream(allowedOrigins.split(","))
+                .map(origin -> origin.trim()).filter(origin -> !origin.isEmpty()).toList());
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));     // con qué métodos
-        config.setAllowedHeaders(List.of("*"));                                           // con qué encabezados
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);   // aplica a todas las rutas

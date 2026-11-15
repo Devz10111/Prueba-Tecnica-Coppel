@@ -17,6 +17,8 @@ describe('adminGuard', () => {
   beforeEach(() => {
     auth = jasmine.createSpyObj<AuthService>('AuthService', [
       'estaAutenticado',
+      'obtenerRol',
+      'mostrarAviso',
     ]);
 
     TestBed.configureTestingModule({
@@ -41,8 +43,19 @@ describe('adminGuard', () => {
 
   it('permite entrar a /admin cuando hay una sesión válida', () => {
     auth.estaAutenticado.and.returnValue(true);
+    auth.obtenerRol.and.returnValue('ADMIN');
 
     expect(ejecutar('/admin')).toBeTrue();
+  });
+
+  it('redirige a inicio a una sesión de empleado', () => {
+    auth.estaAutenticado.and.returnValue(true);
+    auth.obtenerRol.and.returnValue('EMPLEADO');
+
+    const resultado = ejecutar('/admin/usuarios');
+
+    expect(resultado instanceof UrlTree).toBeTrue();
+    expect(router.serializeUrl(resultado as UrlTree)).toBe('/');
   });
 
   it('redirige al login cuando no hay sesión', () => {
@@ -52,7 +65,7 @@ describe('adminGuard', () => {
 
     expect(resultado instanceof UrlTree).toBeTrue();
     expect(router.serializeUrl(resultado as UrlTree)).toBe(
-      '/admin/login?returnUrl=%2Fadmin',
+      '/login?returnUrl=%2Fadmin',
     );
   });
 
@@ -63,7 +76,7 @@ describe('adminGuard', () => {
 
     expect(resultado instanceof UrlTree).toBeTrue();
     expect(router.serializeUrl(resultado as UrlTree)).toBe(
-      '/admin/login?returnUrl=%2Fadmin%2Freservas',
+      '/login?returnUrl=%2Fadmin%2Freservas',
     );
   });
 });

@@ -10,9 +10,9 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 
-import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import javax.crypto.SecretKey;
 
 /** Herramientas para firmar (crear) y validar tokens JWT con una clave secreta (HS256). */
 @Configuration
@@ -22,19 +22,22 @@ public class JwtConfig {
     @Value("${app.jwt.secret}")
     private String secreto;
 
-    private SecretKey clave() {
+    @Bean
+    public SecretKey jwtSecretKey() {
+        if (secreto == null || secreto.length() < 32) {
+            throw new IllegalStateException(
+                    "La clave JWT debe tener al menos 32 caracteres. Configura JWT_SECRET.");
+        }
         return new SecretKeySpec(secreto.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
     }
 
-    // Crea tokens firmados (se usa en el login)
     @Bean
-    public JwtEncoder jwtEncoder() {
-        return new NimbusJwtEncoder(new ImmutableSecret<>(clave()));
+    public JwtEncoder jwtEncoder(SecretKey jwtSecretKey) {
+        return new NimbusJwtEncoder(new ImmutableSecret<>(jwtSecretKey));
     }
 
-    // Valida la firma y la vigencia de los tokens que llegan en cada petición
     @Bean
-    public JwtDecoder jwtDecoder() {
-        return NimbusJwtDecoder.withSecretKey(clave()).macAlgorithm(MacAlgorithm.HS256).build();
+    public JwtDecoder jwtDecoder(SecretKey jwtSecretKey) {
+        return NimbusJwtDecoder.withSecretKey(jwtSecretKey).macAlgorithm(MacAlgorithm.HS256).build();
     }
 }

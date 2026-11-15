@@ -20,7 +20,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { obtenerMensajeError } from '../../../core/utils/error.utils';
 
 /**
- * Pantalla de inicio de sesión del portal de administración.
+ * Pantalla de inicio de sesión compartida por todos los roles.
  *
  * Flujo:
  * 1. Valida correo y contraseña con Reactive Forms.
@@ -74,7 +74,7 @@ export class Login implements OnInit {
   ngOnInit(): void {
     // Si ya hay una sesión válida, no tiene sentido mostrar el login.
     if (this.auth.estaAutenticado()) {
-      void this.router.navigateByUrl(this.destinoSeguro(), {
+      void this.router.navigateByUrl(this.destinoSeguro(this.auth.obtenerRol()), {
         replaceUrl: true,
       });
       return;
@@ -87,6 +87,10 @@ export class Login implements OnInit {
       this.aviso.set('Tu sesión expiró. Inicia sesión nuevamente.');
     } else if (returnUrl) {
       this.aviso.set('Inicia sesión para continuar.');
+    }
+    const avisoGuardado = this.auth.consumirAviso();
+    if (avisoGuardado) {
+      this.aviso.set(avisoGuardado);
     }
 
     // Al escribir de nuevo se oculta el error anterior de la API.
@@ -178,8 +182,8 @@ export class Login implements OnInit {
         finalize(() => this.enviando.set(false)),
       )
       .subscribe({
-        next: () => {
-          void this.router.navigateByUrl(this.destinoSeguro(), {
+        next: (respuesta) => {
+          void this.router.navigateByUrl(this.destinoSeguro(respuesta.rol), {
             replaceUrl: true,
           });
         },
@@ -190,20 +194,18 @@ export class Login implements OnInit {
   }
 
   /**
-   * Decide a dónde ir después del login.
-   * Solo se aceptan rutas internas de /admin para evitar redirecciones
-   * externas si alguien modifica el parámetro returnUrl.
+   * Mantiene rutas internas y evita que un empleado vuelva al panel administrativo.
    */
-  private destinoSeguro(): string {
+  private destinoSeguro(rol: string | null): string {
     const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '';
-    const esRutaAdmin =
-      returnUrl === '/admin' || returnUrl.startsWith('/admin/');
-    const esLogin = returnUrl.startsWith('/admin/login');
+    const esRutaInterna = returnUrl.startsWith('/') && !returnUrl.startsWith('//');
+    const esRutaAuth = returnUrl.startsWith('/login');
+    const esRutaAdmin = returnUrl === '/admin' || returnUrl.startsWith('/admin/');
+    const esAdmin = rol === 'ADMIN' || rol === 'JEFE_DEPARTAMENTO';
 
-    if (returnUrl === '/admin') {
-      return '/admin/reservas';
+    if (esRutaInterna && !esRutaAuth && (!esRutaAdmin || esAdmin)) {
+      return returnUrl === '/admin' ? '/admin/reservas' : returnUrl;
     }
-
-    return esRutaAdmin && !esLogin ? returnUrl : '/admin/reservas';
+    return esAdmin ? '/admin/reservas' : '/';
   }
 }

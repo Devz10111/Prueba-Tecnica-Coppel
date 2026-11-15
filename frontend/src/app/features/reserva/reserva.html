@@ -374,7 +374,7 @@
                 <div>
                   <h2 class="h4 fw-bold mb-1">Datos del solicitante</h2>
                   <p class="text-secondary mb-0">
-                    Captura quién solicita la reserva y el motivo del evento.
+                    Estos datos se toman de tu cuenta. Escribe el motivo del evento.
                   </p>
                 </div>
                 <span class="badge text-bg-light">Paso 3</span>
@@ -382,41 +382,15 @@
 
               <div class="row g-3">
                 <div class="col-12 col-md-6">
-                  <label class="form-label fw-semibold" for="solicitante">
-                    Solicitante <span class="text-danger">*</span>
-                  </label>
-                  <input
-                    id="solicitante"
-                    type="text"
-                    class="form-control"
-                    formControlName="solicitante"
-                    maxlength="120"
-                    autocomplete="name"
-                    placeholder="Nombre completo"
-                    [class.is-invalid]="form.controls.solicitante.touched && form.controls.solicitante.invalid"
-                  />
-                  @if (errorSolicitante(); as mensaje) {
-                    <div class="invalid-feedback d-block">{{ mensaje }}</div>
-                  }
+                  <label class="form-label fw-semibold" for="solicitante">Solicitante</label>
+                  <input id="solicitante" class="form-control bg-light"
+                    [value]="usuario()?.nombre ?? ''" readonly aria-readonly="true" />
                 </div>
 
                 <div class="col-12 col-md-6">
-                  <label class="form-label fw-semibold" for="departamento">
-                    Departamento <span class="text-danger">*</span>
-                  </label>
-                  <input
-                    id="departamento"
-                    type="text"
-                    class="form-control"
-                    formControlName="departamento"
-                    maxlength="120"
-                    autocomplete="organization"
-                    placeholder="Área o departamento"
-                    [class.is-invalid]="form.controls.departamento.touched && form.controls.departamento.invalid"
-                  />
-                  @if (errorDepartamento(); as mensaje) {
-                    <div class="invalid-feedback d-block">{{ mensaje }}</div>
-                  }
+                  <label class="form-label fw-semibold" for="departamento">Departamento</label>
+                  <input id="departamento" class="form-control bg-light"
+                    [value]="usuario()?.departamento || 'Administración'" readonly aria-readonly="true" />
                 </div>
 
                 <div class="col-12 col-md-6">
@@ -499,10 +473,10 @@
                 </dd>
 
                 <dt class="col-sm-4">Solicitante</dt>
-                <dd class="col-sm-8">{{ form.controls.solicitante.value }}</dd>
+                <dd class="col-sm-8">{{ usuario()?.nombre }}</dd>
 
                 <dt class="col-sm-4">Departamento</dt>
-                <dd class="col-sm-8">{{ form.controls.departamento.value }}</dd>
+                <dd class="col-sm-8">{{ usuario()?.departamento || 'Administración' }}</dd>
 
                 <dt class="col-sm-4">Descripción</dt>
                 <dd class="col-sm-8 descripcion-resumen">

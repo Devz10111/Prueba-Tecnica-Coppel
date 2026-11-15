@@ -41,15 +41,21 @@ public class DataLoader implements CommandLineRunner {
             ));
         }
 
-        if (usuarioRepository.count() == 0) {
-            // La contraseña se cifra ANTES de guardarla: en la base solo queda el hash.
-            usuarioRepository.save(new Usuario(
-                "Administrador de Reservas", "admin@coppel.test",
-                passwordEncoder.encode("Admin123!"), Rol.ADMIN));
+        crearUsuarioSiFalta("admin@coppel.test", "Administrador de Reservas", null,
+                "Admin123!", Rol.ADMIN);
+        crearUsuarioSiFalta("jefe@coppel.test", "Jefe de Departamento", null,
+                "Jefe123!", Rol.JEFE_DEPARTAMENTO);
+        crearUsuarioSiFalta("empleado1@coppel.test", "Empleado de Sistemas", "Sistemas",
+                "Empleado123!", Rol.EMPLEADO);
+        crearUsuarioSiFalta("empleado2@coppel.test", "Empleado de Finanzas", "Finanzas",
+                "Empleado123!", Rol.EMPLEADO);
+    }
 
+    private void crearUsuarioSiFalta(String email, String nombre, String departamento,
+                                     String password, Rol rol) {
+        if (!usuarioRepository.existsByEmailIgnoreCase(email)) {
             usuarioRepository.save(new Usuario(
-                "Jefe de Departamento", "jefe@coppel.test",
-                passwordEncoder.encode("Jefe123!"), Rol.JEFE_DEPARTAMENTO));
+                    nombre, email, departamento, passwordEncoder.encode(password), rol));
         }
     }
 }

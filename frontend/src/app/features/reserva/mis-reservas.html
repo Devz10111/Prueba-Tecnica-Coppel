@@ -1,0 +1,52 @@
+<section>
+  <header class="mb-4">
+    <h1 class="h2 fw-bold">Mis reservas</h1>
+    <p class="text-secondary mb-0">Consulta el estado de tus solicitudes y abre su detalle por folio.</p>
+  </header>
+
+  @if (cargando()) {
+    <div class="d-flex align-items-center gap-2 py-5 justify-content-center" role="status">
+      <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+      <span>Cargando tus reservas...</span>
+    </div>
+  } @else if (error(); as mensaje) {
+    <div class="alert alert-danger" role="alert">
+      <p class="mb-2">{{ mensaje }}</p>
+      <button class="btn btn-sm btn-outline-danger" type="button" (click)="cargar()">Reintentar</button>
+    </div>
+  } @else if (reservas().length === 0) {
+    <div class="alert alert-info" role="status">Todavía no tienes reservas.</div>
+    <a class="btn btn-primary" routerLink="/reservar">Crear una reserva</a>
+  } @else {
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th scope="col">Folio</th>
+            <th scope="col">Espacio</th>
+            <th scope="col">Fecha</th>
+            <th scope="col">Horario</th>
+            <th scope="col">Estado</th>
+            <th scope="col"><span class="visually-hidden">Detalle</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (reserva of reservas(); track reserva.folio) {
+            <tr>
+              <th scope="row">{{ reserva.folio }}</th>
+              <td>{{ reserva.espacio }}</td>
+              <td>{{ reserva.fecha }}</td>
+              <td>{{ reserva.horaInicio.slice(0, 5) }}–{{ reserva.horaFin.slice(0, 5) }}</td>
+              <td><span class="badge" [class]="claseEstado(reserva.estado)">{{ reserva.estado }}</span></td>
+              <td>
+                <a class="btn btn-sm btn-outline-primary" [routerLink]="['/consultar', reserva.folio]">
+                  Ver detalle
+                </a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

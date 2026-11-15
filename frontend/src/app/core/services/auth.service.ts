@@ -34,9 +34,11 @@ export class AuthService {
   private readonly usuarioSesion = signal<DatosUsuarioSesion | null>(
     this.leerUsuarioGuardado(),
   );
+  private readonly aviso = signal<string | null>(null);
 
   /** Versión de solo lectura que pueden consumir los componentes. */
   readonly usuarioActual = this.usuarioSesion.asReadonly();
+  readonly avisoActual = this.aviso.asReadonly();
 
   /**
    * POST /api/auth/login
@@ -50,6 +52,20 @@ export class AuthService {
       .pipe(
         tap((respuesta) => this.guardarSesion(respuesta)),
       );
+  }
+
+  mostrarAviso(mensaje: string): void {
+    this.aviso.set(mensaje);
+  }
+
+  limpiarAviso(): void {
+    this.aviso.set(null);
+  }
+
+  consumirAviso(): string | null {
+    const mensaje = this.aviso();
+    this.aviso.set(null);
+    return mensaje;
   }
 
   /**
@@ -74,6 +90,8 @@ export class AuthService {
       nombre: respuesta.nombre,
       rol: respuesta.rol,
       expiraEn: respuesta.expiraEn,
+      email: respuesta.email,
+      departamento: respuesta.departamento,
     };
 
     localStorage.setItem(this.CLAVE_TOKEN, respuesta.token);
@@ -122,7 +140,8 @@ export class AuthService {
         typeof usuario.nombre !== 'string' ||
         !('rol' in usuario) ||
         (usuario.rol !== 'ADMIN' &&
-          usuario.rol !== 'JEFE_DEPARTAMENTO') ||
+          usuario.rol !== 'JEFE_DEPARTAMENTO' &&
+          usuario.rol !== 'EMPLEADO') ||
         !('expiraEn' in usuario) ||
         typeof usuario.expiraEn !== 'string'
       ) {
@@ -140,6 +159,11 @@ export class AuthService {
         nombre: usuario.nombre,
         rol: usuario.rol,
         expiraEn: usuario.expiraEn,
+        email: 'email' in usuario && typeof usuario.email === 'string' ? usuario.email : '',
+        departamento:
+          'departamento' in usuario && typeof usuario.departamento === 'string'
+            ? usuario.departamento
+            : null,
       };
     } catch {
       // Si el JSON está dañado, se elimina la sesión para evitar errores.

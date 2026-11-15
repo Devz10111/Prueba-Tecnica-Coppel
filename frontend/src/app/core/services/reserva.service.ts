@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { API_CONFIG } from '../config/api.config';
-import { ReservaRequest, ReservaResponse } from '../models';
+import { ReservaRequest, ReservaResponse, ReservaResumen } from '../models';
 
 /**
  * Servicio con las operaciones públicas de reservas.
@@ -32,5 +32,9 @@ export class ReservaService {
     return this.http.get<ReservaResponse>(
       `${this.apiUrl}/${encodeURIComponent(folio)}`,
     );
+  }
+
+  listarMias(): Observable<ReservaResumen[]> {
+    return this.http.get<ReservaResumen[]>(`${this.apiUrl}/mias`);
   }
 }

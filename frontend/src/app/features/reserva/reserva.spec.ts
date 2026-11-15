@@ -4,6 +4,7 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 
 import {
@@ -13,6 +14,7 @@ import {
   ReservaResponse,
 } from '../../core/models';
 import { Reserva } from './reserva';
+import { AuthService } from '../../core/services/auth.service';
 
 const API = 'http://localhost:8080';
 const FECHA = '2099-01-15';
@@ -66,12 +68,22 @@ describe('Reserva', () => {
   let http: HttpTestingController;
 
   beforeEach(async () => {
+    const auth = {
+      usuarioActual: signal({
+        nombre: 'Ana Pérez',
+        email: 'ana@coppel.test',
+        departamento: 'Sistemas',
+        rol: 'EMPLEADO' as const,
+        expiraEn: '2099-12-31T23:59:59',
+      }),
+    };
     await TestBed.configureTestingModule({
       imports: [Reserva],
       providers: [
         provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
+        { provide: AuthService, useValue: auth },
       ],
     }).compileComponents();
 
@@ -102,8 +114,6 @@ describe('Reserva', () => {
   function capturarReserva(): void {
     componente.form.controls.horaInicio.setValue('10:00');
     componente.form.controls.horaFin.setValue('11:00');
-    componente.form.controls.solicitante.setValue('Ana Pérez');
-    componente.form.controls.departamento.setValue('Sistemas');
     componente.form.controls.descripcion.setValue('Reunión de planeación');
     componente.pasoActual.set(4);
     fixture.detectChanges();
@@ -174,14 +184,8 @@ describe('Reserva', () => {
     );
   });
 
-  it('valida los datos del solicitante', () => {
+  it('valida la descripción del evento', () => {
     prepararFormulario();
-
-    componente.form.controls.solicitante.setValue('   ');
-    componente.form.controls.solicitante.markAsTouched();
-
-    expect(componente.errorSolicitante()).toContain('obligatorio');
-    expect(componente.paso3Valido()).toBeFalse();
 
     componente.form.controls.descripcion.setValue('a'.repeat(501));
     componente.form.controls.descripcion.markAsTouched();
@@ -203,8 +207,6 @@ describe('Reserva', () => {
       fecha: FECHA,
       horaInicio: '10:00',
       horaFin: '11:00',
-      solicitante: 'Ana Pérez',
-      departamento: 'Sistemas',
       descripcion: 'Reunión de planeación',
     });
 

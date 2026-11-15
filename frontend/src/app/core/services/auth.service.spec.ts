@@ -19,6 +19,8 @@ const RESPUESTA_LOGIN: LoginResponse = {
   expiraEn: '2099-12-31T23:59:59',
   nombre: 'Administrador de Reservas',
   rol: 'ADMIN',
+  email: 'admin@coppel.test',
+  departamento: null,
 };
 
 describe('AuthService', () => {
@@ -64,6 +66,8 @@ describe('AuthService', () => {
       nombre: 'Administrador de Reservas',
       rol: 'ADMIN',
       expiraEn: '2099-12-31T23:59:59',
+      email: 'admin@coppel.test',
+      departamento: null,
     });
     expect(auth.estaAutenticado()).toBeTrue();
     expect(auth.obtenerRol()).toBe('ADMIN');

@@ -2,7 +2,7 @@
  * Roles que puede tener un usuario autenticado.
  * Coincide con el enum Rol del backend.
  */
-export type RolUsuario = 'ADMIN' | 'JEFE_DEPARTAMENTO';
+export type RolUsuario = 'ADMIN' | 'JEFE_DEPARTAMENTO' | 'EMPLEADO';
 
 /**
  * Credenciales que se envían al endpoint de login.
@@ -19,7 +19,7 @@ export interface LoginRequest {
  *
  * - tipo: siempre "Bearer".
  * - expiraEn: fecha ISO con la hora exacta en que vence el token.
- * - rol: "ADMIN" o "JEFE_DEPARTAMENTO".
+ * - rol: "ADMIN", "JEFE_DEPARTAMENTO" o "EMPLEADO".
  */
 export interface LoginResponse {
   token: string;
@@ -27,10 +27,15 @@ export interface LoginResponse {
   expiraEn: string;
   nombre: string;
   rol: RolUsuario;
+  email: string;
+  departamento: string | null;
 }
 
 /**
  * Datos del usuario que se guardan en el navegador para saber quién inició sesión.
  * Es un subconjunto de LoginResponse: el token se guarda por separado.
  */
-export type DatosUsuarioSesion = Pick<LoginResponse, 'nombre' | 'rol' | 'expiraEn'>;
+export type DatosUsuarioSesion = Pick<
+  LoginResponse,
+  'nombre' | 'rol' | 'expiraEn' | 'email' | 'departamento'
+>;

@@ -20,6 +20,8 @@ const RESPUESTA_LOGIN: LoginResponse = {
   expiraEn: '2099-12-31T23:59:59',
   nombre: 'Administrador de Reservas',
   rol: 'ADMIN',
+  email: 'admin@coppel.test',
+  departamento: null,
 };
 
 describe('Login', () => {
@@ -36,9 +38,13 @@ describe('Login', () => {
     auth = jasmine.createSpyObj<AuthService>('AuthService', [
       'login',
       'estaAutenticado',
+      'obtenerRol',
+      'consumirAviso',
       'logout',
     ]);
     auth.estaAutenticado.and.returnValue(false);
+    auth.obtenerRol.and.returnValue(null);
+    auth.consumirAviso.and.returnValue(null);
     auth.login.and.returnValue(of(RESPUESTA_LOGIN));
 
     await TestBed.configureTestingModule({
@@ -114,7 +120,7 @@ describe('Login', () => {
     });
   });
 
-  it('respeta returnUrl cuando es una ruta interna de /admin', () => {
+  it('respeta returnUrl cuando es una ruta interna', () => {
     crear(convertToParamMap({ returnUrl: '/admin/reservas' }));
 
     componente.form.setValue({
@@ -128,7 +134,7 @@ describe('Login', () => {
     });
   });
 
-  it('ignora returnUrl externos o que apuntan al login', () => {
+  it('ignora returnUrl externos', () => {
     crear(convertToParamMap({ returnUrl: 'https://sitio-externo.test' }));
 
     componente.form.setValue({
@@ -186,8 +192,9 @@ describe('Login', () => {
     );
   });
 
-  it('redirige al panel si ya hay una sesión válida', () => {
+  it('redirige al panel si ya hay una sesión administrativa válida', () => {
     auth.estaAutenticado.and.returnValue(true);
+    auth.obtenerRol.and.returnValue('ADMIN');
 
     crear(convertToParamMap({ returnUrl: '/admin' }));
 

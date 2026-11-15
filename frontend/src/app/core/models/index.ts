@@ -9,3 +9,4 @@ export * from './auth.model';
 export * from './espacio.model';
 export * from './estado-reserva.model';
 export * from './reserva.model';
+export * from './usuario.model';

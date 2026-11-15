@@ -6,9 +6,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Usuario con acceso al portal de administración.
+ * Cuenta de usuario del sistema.
  * Cada objeto Usuario es una fila de la tabla "usuarios".
- * Sus credenciales se usarán para el login con JWT.
+ * Las cuentas ADMIN y JEFE_DEPARTAMENTO pueden iniciar sesión al panel.
  */
 @Entity
 @Table(name = "usuarios")
@@ -30,6 +30,9 @@ public class Usuario {
     @Column(nullable = false, unique = true, length = 120)
     private String email;
 
+    @Column(length = 120)
+    private String departamento;
+
     // name = "password_hash" fija el nombre de la columna en la base de datos
     // (por convención en SQL se usa snake_case, y en Java camelCase).
     // Aquí NUNCA se guarda la contraseña real, solo su hash cifrado con bcrypt.
@@ -49,5 +52,10 @@ public class Usuario {
         this.email = email;
         this.passwordHash = passwordHash;
         this.rol = rol;
+    }
+
+    public Usuario(String nombre, String email, String departamento, String passwordHash, Rol rol) {
+        this(nombre, email, passwordHash, rol);
+        this.departamento = departamento;
     }
 }

@@ -3,6 +3,7 @@ package com.coppel.reservas.repository;
 import com.coppel.reservas.model.EstadoReserva;
 import com.coppel.reservas.model.Reserva;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -19,6 +20,13 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 
     // SELECT * FROM reservas WHERE folio = ?
     Optional<Reserva> findByFolio(String folio);
+
+    @Query("""
+            SELECT r FROM Reserva r JOIN FETCH r.espacio
+            WHERE r.usuario.id = :usuarioId
+            ORDER BY r.fecha DESC, r.horaInicio DESC
+            """)
+    List<Reserva> listarPorUsuarioId(@Param("usuarioId") Long usuarioId);
 
     // Reservas de un espacio en una fecha, con los estados indicados, ordenadas por hora
     List<Reserva> findByEspacioIdAndFechaAndEstadoInOrderByHoraInicioAsc(
@@ -38,6 +46,10 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
             ORDER BY r.fecha DESC, r.horaInicio DESC
             """)
     List<Reserva> listarPorEstado(@Param("estado") EstadoReserva estado);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Reserva r SET r.usuario = null WHERE r.usuario.id = :usuarioId")
+    int desvincularUsuario(@Param("usuarioId") Long usuarioId);
 
     /**
      * Indica si ya existe una reserva que se traslape con el horario solicitado.

@@ -3,26 +3,22 @@ import { CanActivateFn, Router } from '@angular/router';
 
 import { AuthService } from '../services/auth.service';
 
-/**
- * Guard funcional del portal de administración.
- *
- * Se ejecuta antes de entrar a /admin y a cualquier ruta hija
- * (/admin/...). Si la sesión existe y el token no ha expirado, permite
- * la navegación. Si no hay sesión o ya expiró, devuelve un UrlTree que
- * redirige a /admin/login.
- *
- * Se guarda `state.url` en `returnUrl` para que, después de iniciar
- * sesión, el usuario regrese a la pantalla que intentaba abrir.
- */
 export const adminGuard: CanActivateFn = (_route, state) => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
-  if (auth.estaAutenticado()) {
+  if (!auth.estaAutenticado()) {
+    auth.mostrarAviso('Inicia sesión para continuar.');
+    return router.createUrlTree(['/login'], {
+      queryParams: { returnUrl: state.url },
+    });
+  }
+
+  const rol = auth.obtenerRol();
+  if (rol === 'ADMIN' || rol === 'JEFE_DEPARTAMENTO') {
     return true;
   }
 
-  return router.createUrlTree(['/admin/login'], {
-    queryParams: { returnUrl: state.url },
-  });
+  auth.mostrarAviso('No tienes permisos para acceder al panel de administración.');
+  return router.createUrlTree(['/']);
 };

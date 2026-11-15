@@ -1,0 +1,11 @@
+.admin-usuarios {
+  min-width: 0;
+}
+
+.admin-usuarios table {
+  min-width: 600px;
+}
+
+.admin-usuarios td {
+  overflow-wrap: anywhere;
+}

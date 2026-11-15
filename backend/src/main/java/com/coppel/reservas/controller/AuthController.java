@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Endpoint de inicio de sesión del portal de administración. */
+/** Endpoint de inicio de sesión compartido por todos los roles. */
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor

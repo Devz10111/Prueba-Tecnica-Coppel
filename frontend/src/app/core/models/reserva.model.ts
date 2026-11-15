@@ -12,8 +12,8 @@ export interface ReservaRequest {
   fecha: string;       // "YYYY-MM-DD"
   horaInicio: string;  // "HH:mm"
   horaFin: string;     // "HH:mm"
-  solicitante: string;
-  departamento: string;
+  solicitante?: string;
+  departamento?: string;
   descripcion: string;
 }
 
