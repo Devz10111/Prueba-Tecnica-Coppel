@@ -113,6 +113,20 @@ El backend permite solicitudes CORS desde `http://localhost:4200`.
 
 La ruta `/admin` redirige a `/admin/reservas`. Las rutas de administración están protegidas por sesión.
 
+### Capturas de la interfaz
+
+#### Inicio
+
+<img src="./docs/capturas/inicio.png" alt="Pantalla principal de reserva de espacios" width="900">
+
+#### Nueva reserva
+
+<img src="./docs/capturas/reserva.png" alt="Primer paso del formulario de nueva reserva" width="900">
+
+#### Acceso administrador
+
+<img src="./docs/capturas/login-admin.png" alt="Pantalla de inicio de sesión del administrador" width="900">
+
 ### Variables opcionales
 
 | Variable | Para qué sirve | Valor por defecto |
