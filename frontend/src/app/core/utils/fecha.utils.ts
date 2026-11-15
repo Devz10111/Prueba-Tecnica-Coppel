@@ -1,7 +1,34 @@
 /**
- * Utilidades de formato de fechas y horas compartidas por varias pantallas.
+ * Utilidades de formato y cálculo de fechas compartidas por varias pantallas.
  * El backend envía fechas como "YYYY-MM-DD" y horas como "HH:mm:ss".
  */
+
+/**
+ * Devuelve la fecha local de un objeto Date en formato "YYYY-MM-DD".
+ * Se usa la fecha local (no UTC) para que el día coincida con el del usuario.
+ */
+export function fechaLocal(fecha: Date): string {
+  const anio = fecha.getFullYear();
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  return `${anio}-${mes}-${dia}`;
+}
+
+/**
+ * Suma o resta días a una fecha "YYYY-MM-DD".
+ * Por ejemplo: sumarDias('2026-11-20', 1) devuelve '2026-11-21'.
+ */
+export function sumarDias(fecha: string, dias: number): string {
+  const partes = fecha.split('-').map(Number);
+  if (partes.length !== 3 || partes.some((parte) => Number.isNaN(parte))) {
+    return fecha;
+  }
+
+  const [anio, mes, dia] = partes;
+  const resultado = new Date(anio, mes - 1, dia);
+  resultado.setDate(resultado.getDate() + dias);
+  return fechaLocal(resultado);
+}
 
 /** Formatea "YYYY-MM-DD" como "Viernes, 20 de noviembre de 2026". */
 export function formatearFechaLarga(fecha: string | null): string {

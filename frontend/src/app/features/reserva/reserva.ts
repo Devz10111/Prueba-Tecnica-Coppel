@@ -7,7 +7,7 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 
 import {
@@ -20,17 +20,11 @@ import { EspacioService } from '../../core/services/espacio.service';
 import { ReservaService } from '../../core/services/reserva.service';
 import { obtenerMensajeError } from '../../core/utils/error.utils';
 import {
+  fechaLocal,
   formatearFechaLarga,
   formatearHoraCorta,
 } from '../../core/utils/fecha.utils';
-
-/** Devuelve la fecha local en formato "YYYY-MM-DD" (sin desfase por zona horaria). */
-function fechaLocal(fecha: Date): string {
-  const anio = fecha.getFullYear();
-  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-  const dia = String(fecha.getDate()).padStart(2, '0');
-  return `${anio}-${mes}-${dia}`;
-}
+import { horaAMinutos } from '../../core/utils/hora.utils';
 
 /** Validador: la fecha no puede ser anterior a hoy. */
 function fechaNoPasada(control: AbstractControl): ValidationErrors | null {
@@ -50,27 +44,6 @@ function textoNoVacio(control: AbstractControl): ValidationErrors | null {
   return null;
 }
 
-/** Convierte una hora "HH:mm" o "HH:mm:ss" a minutos desde medianoche. */
-function aMinutos(hora: string | null): number | null {
-  if (!hora) {
-    return null;
-  }
-
-  const coincidencia = /^(\d{2}):(\d{2})/.exec(hora);
-  if (!coincidencia) {
-    return null;
-  }
-
-  const horas = Number(coincidencia[1]);
-  const minutos = Number(coincidencia[2]);
-
-  if (horas > 23 || minutos > 59) {
-    return null;
-  }
-
-  return horas * 60 + minutos;
-}
-
 /**
  * Formulario de reserva en 4 pasos.
  *
@@ -88,6 +61,7 @@ export class Reserva implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly espacioService = inject(EspacioService);
   private readonly reservaService = inject(ReservaService);
+  private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
 
   /** Número de la solicitud de disponibilidad más reciente (evita respuestas viejas). */
@@ -168,8 +142,8 @@ export class Reserva implements OnInit {
 
   /** Duración calculada a partir de las horas capturadas. */
   protected get duracionMinutos(): number {
-    const inicio = aMinutos(this.form.controls.horaInicio.value);
-    const fin = aMinutos(this.form.controls.horaFin.value);
+    const inicio = horaAMinutos(this.form.controls.horaInicio.value);
+    const fin = horaAMinutos(this.form.controls.horaFin.value);
 
     if (inicio === null || fin === null || fin <= inicio) {
       return 0;
@@ -227,10 +201,49 @@ export class Reserva implements OnInit {
         finalize(() => this.cargandoEspacios.set(false)),
       )
       .subscribe({
-        next: (espacios) => this.espacios.set(espacios),
+        next: (espacios) => {
+          this.espacios.set(espacios);
+          this.aplicarSeleccionInicial();
+        },
         error: (error: unknown) =>
           this.errorEspacios.set(obtenerMensajeError(error)),
       });
+  }
+
+  /**
+   * Aplica los parámetros opcionales que llegan desde el calendario:
+   * /reservar?espacioId=1&fecha=2026-11-20
+   *
+   * Solo se usan valores válidos para no romper el formulario si la URL
+   * fue escrita a mano o el espacio ya no existe.
+   */
+  private aplicarSeleccionInicial(): void {
+    const parametros = this.route.snapshot.queryParamMap;
+    const espacioTexto = parametros.get('espacioId');
+    const fecha = parametros.get('fecha') ?? '';
+
+    const espacioId = espacioTexto !== null ? Number(espacioTexto) : Number.NaN;
+    const espacioValido =
+      Number.isInteger(espacioId) &&
+      espacioId > 0 &&
+      this.espacios().some((espacio) => espacio.id === espacioId);
+
+    const fechaValida =
+      /^\d{4}-\d{2}-\d{2}$/.test(fecha) && fecha >= fechaLocal(new Date());
+
+    if (!espacioValido && !fechaValida) {
+      return;
+    }
+
+    // emitEvent:false evita dos consultas; al final se hace una sola.
+    if (espacioValido) {
+      this.form.controls.espacioId.setValue(espacioId, { emitEvent: false });
+    }
+    if (fechaValida) {
+      this.form.controls.fecha.setValue(fecha, { emitEvent: false });
+    }
+
+    this.actualizarDisponibilidad();
   }
 
   /** Consulta las franjas ocupadas del espacio y fecha actuales. */
@@ -484,15 +497,15 @@ export class Reserva implements OnInit {
       return ['Selecciona la hora de inicio y la hora de fin.'];
     }
 
-    const inicio = aMinutos(inicioValor);
-    const fin = aMinutos(finValor);
+    const inicio = horaAMinutos(inicioValor);
+    const fin = horaAMinutos(finValor);
 
     if (inicio === null || fin === null) {
       return ['Usa un formato de hora válido (HH:mm).'];
     }
 
-    const apertura = aMinutos(this.horaApertura) ?? 8 * 60;
-    const cierre = aMinutos(this.horaCierre) ?? 20 * 60;
+    const apertura = horaAMinutos(this.horaApertura) ?? 8 * 60;
+    const cierre = horaAMinutos(this.horaCierre) ?? 20 * 60;
     const mensajes: string[] = [];
 
     if (fin <= inicio) {
@@ -519,8 +532,8 @@ export class Reserva implements OnInit {
       const disponibilidad = this.disponibilidad();
       if (disponibilidad) {
         const conflictos = disponibilidad.ocupados.filter((ocupacion) => {
-          const ocupadoInicio = aMinutos(ocupacion.horaInicio);
-          const ocupadoFin = aMinutos(ocupacion.horaFin);
+          const ocupadoInicio = horaAMinutos(ocupacion.horaInicio);
+          const ocupadoFin = horaAMinutos(ocupacion.horaFin);
 
           if (ocupadoInicio === null || ocupadoFin === null) {
             return false;
