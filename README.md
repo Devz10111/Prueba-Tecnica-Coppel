@@ -271,7 +271,7 @@ Se probaron con Postman los siguientes casos del portal del empleado y del login
 - Login correcto, credenciales incorrectas y datos inválidos.
 - Acceso a rutas de administración sin token, con token válido y con token alterado.
 
-El frontend cuenta con pruebas unitarias para servicios HTTP, autenticación, guardas y reglas de reserva. Para ejecutarlas, consulta la sección de pruebas de [GUIA_FRONTEND.md](./GUIA_FRONTEND.md).
+El frontend cuenta con pruebas unitarias para servicios HTTP, autenticación, guardas y reglas de reserva.
 
 ## Consideraciones para producción
 
