@@ -142,14 +142,10 @@ class AdminUsuarioControllerTest {
 
         entityManager.clear();
         org.assertj.core.api.Assertions.assertThat(usuarioRepository.findById(usuario.getId())).isEmpty();
-        org.assertj.core.api.Assertions.assertThat(reservaRepository.findById(reservaGuardada.getId()))
-                .get()
-                .extracting(Reserva::getUsuario)
-                .isNull();
-        org.assertj.core.api.Assertions.assertThat(historialCambioRepository.findById(cambio.getId()))
-                .get()
-                .extracting(HistorialCambio::getUsuario)
-                .isNull();
+        Reserva reservaEncontrada = reservaRepository.findById(reservaGuardada.getId()).orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(reservaEncontrada.getUsuario()).isNull();
+        HistorialCambio cambioEncontrado = historialCambioRepository.findById(cambio.getId()).orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(cambioEncontrado.getUsuario()).isNull();
     }
 
     @Test
