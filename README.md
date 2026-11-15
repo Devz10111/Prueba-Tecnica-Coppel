@@ -32,7 +32,6 @@ Prueba-Tecnica-Coppel/
 ├── frontend/                Aplicación Angular standalone
 │   ├── public/              Recursos estáticos (logo)
 │   └── src/app/             Pantallas, rutas, servicios y lógica compartida
-├── GUIA_FRONTEND.md         Guía para presentar la arquitectura Angular
 └── README.md
 ```
 
